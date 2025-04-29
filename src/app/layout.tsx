@@ -4,12 +4,9 @@ import Header from "./components/Header";
 import Footer from "./components/Footer";
 import { config } from '@fortawesome/fontawesome-svg-core';
 import '@fortawesome/fontawesome-svg-core/styles.css';
-import ClientDebugWrapper from "./components/ClientDebugWrapper";
 
 // Empêcher Font Awesome d'ajouter automatiquement ses styles CSS (pour éviter le clignotement)
 config.autoAddCss = false;
-
-// Le composant ClientDebugWrapper est un composant client qui charge le DebugLogger
 
 export const metadata: Metadata = {
   title: "Jungle CBD - Votre Oasis de Bien-être",
@@ -27,7 +24,6 @@ export default function RootLayout({
         <Header />
         <main>{children}</main>
         <Footer />
-        <ClientDebugWrapper />
       </body>
     </html>
   );

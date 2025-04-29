@@ -36,35 +36,46 @@ const Header = () => {
     };
   }, []);
   
-  // Gérer l'animation de la barre de navigation lors du défilement
+  // Gérer l'animation de la barre de navigation lors du défilement avec une meilleure stabilité
   useEffect(() => {
     let lastScrollY = window.scrollY;
     let ticking = false;
+    let scrollTimer: NodeJS.Timeout | null = null;
+    let scrollThreshold = 50; // Seuil de défilement minimum pour déclencher un changement
     
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
+      const scrollDifference = Math.abs(currentScrollY - lastScrollY);
       
-      // Déterminer si l'utilisateur défile vers le haut ou vers le bas
-      const isScrollingDown = currentScrollY > lastScrollY;
-      
-      // Ne pas cacher la barre de navigation si nous sommes en haut de la page
-      if (currentScrollY < 50) {
-        setIsVisible(true);
-      } else {
-        setIsVisible(!isScrollingDown);
+      // Ne réagir que si le défilement dépasse le seuil
+      if (scrollDifference > scrollThreshold) {
+        // Déterminer si l'utilisateur défile vers le haut ou vers le bas
+        const isScrollingDown = currentScrollY > lastScrollY;
+        
+        // Ne pas cacher la barre de navigation si nous sommes en haut de la page
+        if (currentScrollY < 100) {
+          setIsVisible(true);
+        } else {
+          // Utiliser un délai pour éviter les changements trop fréquents
+          if (scrollTimer) clearTimeout(scrollTimer);
+          
+          scrollTimer = setTimeout(() => {
+            setIsVisible(!isScrollingDown);
+          }, 100); // Délai de 100ms pour stabiliser
+        }
+        
+        // Mettre à jour la dernière position connue seulement après un défilement significatif
+        lastScrollY = currentScrollY;
       }
       
-      // Mettre à jour la dernière position connue
-      lastScrollY = currentScrollY;
       ticking = false;
     };
     
-    // Optimiser les performances avec requestAnimationFrame
+    // Optimiser les performances avec requestAnimationFrame et throttling
     const onScroll = () => {
       if (!ticking) {
         window.requestAnimationFrame(() => {
           handleScroll();
-          ticking = false;
         });
         ticking = true;
       }
@@ -75,6 +86,7 @@ const Header = () => {
     
     return () => {
       window.removeEventListener('scroll', onScroll);
+      if (scrollTimer) clearTimeout(scrollTimer);
     };
   }, []);
 
