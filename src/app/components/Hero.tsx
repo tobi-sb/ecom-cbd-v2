@@ -64,60 +64,40 @@ const Hero = () => {
     return () => clearTimeout(timeout);
   }, [isClient]);
 
-  // Gérer la lecture/pause de la vidéo
+  // Gérer la lecture/pause de la vidéo - version ultra simplifiée
   const togglePlay = () => {
     if (!videoRef.current) return;
     
-    if (videoRef.current.paused) {
-      // Détection iOS/Safari
-      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
-      
-      // Sur iOS, on laisse la vidéo en muet pour la première lecture
-      // car iOS bloque la lecture automatique avec son
-      if (!isIOS) {
-        videoRef.current.muted = false;
+    // Détection iOS/Safari
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
+    try {
+      if (videoRef.current.paused) {
+        // Toujours commencer en muet pour iOS
+        if (isIOS) {
+          videoRef.current.muted = true;
+        }
+        
+        // Lancer la vidéo
+        videoRef.current.play()
+          .then(() => {
+            setIsPlaying(true);
+            console.log('Vidéo lancée avec succès');
+            
+            // Sur les appareils non-iOS, on active le son
+            if (!isIOS) {
+              videoRef.current!.muted = false;
+            }
+          })
+          .catch(error => {
+            console.error('Erreur de lecture vidéo:', error.message);
+          });
+      } else {
+        videoRef.current.pause();
+        setIsPlaying(false);
       }
-      
-      // Tentative de lecture
-      videoRef.current.play()
-        .then(() => {
-          setIsPlaying(true);
-          console.log('Vidéo lancée avec succès');
-          
-          // Sur iOS, on essaie d'activer le son après le démarrage de la vidéo
-          if (isIOS) {
-            // Attendre un court instant avant d'essayer d'activer le son
-            setTimeout(() => {
-              try {
-                videoRef.current!.muted = false;
-                console.log('Son activé après démarrage');
-              } catch (e) {
-                console.warn('Impossible d’activer le son automatiquement:', e);
-              }
-            }, 500);
-          }
-        })
-        .catch(error => {
-          console.error('Erreur lors de la lecture de la vidéo:', error);
-          
-          // En cas d'erreur sur iOS, on essaie de lire en muet
-          if (isIOS && videoRef.current && !videoRef.current.muted) {
-            console.log('Tentative de lecture en muet...');
-            videoRef.current.muted = true;
-            videoRef.current.play()
-              .then(() => {
-                setIsPlaying(true);
-                console.log('Vidéo lancée en muet avec succès');
-              })
-              .catch(secondError => {
-                console.error('Erreur lors de la seconde tentative de lecture:', secondError);
-              });
-          }
-        });
-    } else {
-      videoRef.current.pause();
-      setIsPlaying(false);
+    } catch (error) {
+      console.error('Erreur lors de la manipulation de la vidéo:', error);
     }
   };
 
@@ -175,6 +155,7 @@ const Hero = () => {
               ref={videoRef}
               muted
               playsInline
+              controls={isPlaying} /* Afficher les contrôles natifs une fois la vidéo lancée */
               preload="metadata"
               poster="/images/capture_1745947510794.png"
               style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }}
@@ -188,8 +169,8 @@ const Hero = () => {
               Votre navigateur ne prend pas en charge la lecture vidéo.
             </video>
             
-            {/* Bouton play au centre */}
-            {!isPlaying && (
+            {/* Bouton play au centre - toujours visible sur mobile */}
+            {(!isPlaying || /iPad|iPhone|iPod/.test(navigator.userAgent)) && (
               <div className={styles.centerPlayIcon} onClick={togglePlay}>
                 <FaPlay />
               </div>
