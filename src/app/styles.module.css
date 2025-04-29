@@ -1174,7 +1174,7 @@
     margin-bottom: 40px;
   }
   
-  h2::after, .products h2::after, .featuredCategories h2::after, .sectionTitle h2::after {
+  .products h2::after, .featuredCategories h2::after, .sectionTitle h2::after {
     bottom: -12px;
     width: 50px;
   }
@@ -1264,7 +1264,7 @@
     margin-bottom: 30px;
   }
   
-  h2::after, .products h2::after, .featuredCategories h2::after, .sectionTitle h2::after {
+  .products h2::after, .featuredCategories h2::after, .sectionTitle h2::after {
     bottom: -10px;
     width: 40px;
     height: 2px;
