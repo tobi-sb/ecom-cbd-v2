@@ -4,12 +4,15 @@ import Image from 'next/image';
 import styles from '../styles.module.css';
 import { useState, useRef, useEffect } from 'react';
 import Loader from './Loader';
+import { FaPlay } from 'react-icons/fa';
 
 const Hero = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const [isMobile, setIsMobile] = useState(false);
   const [isLoading, setIsLoading] = useState(true); // État pour le loader
+  const [isClient, setIsClient] = useState(false); // État pour détecter le côté client
+  const [isPlaying, setIsPlaying] = useState(false); // État pour la lecture vidéo
 
   // Effet de parallaxe lors du défilement
   useEffect(() => {
@@ -29,16 +32,18 @@ const Hero = () => {
     };
   }, []);
 
-  // Utiliser useEffect pour détecter le côté client
-  const [isClient, setIsClient] = useState(false);
-  
+  // Détecter le côté client
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
   // Précharger l'image de fond du Hero
   useEffect(() => {
     if (!isClient) return;
     
     // Utiliser l'API Image du navigateur pour précharger l'image
     const bgImage = new window.Image();
-    bgImage.src = '/images/image_test/image_test4.jpg';
+    bgImage.src = '/images/image_test/image_test11.jpg';
     
     bgImage.onload = () => {
       // L'image de fond est chargée
@@ -58,7 +63,28 @@ const Hero = () => {
     
     return () => clearTimeout(timeout);
   }, [isClient]);
-  
+
+  // Gérer la lecture/pause de la vidéo
+  const togglePlay = () => {
+    if (!videoRef.current) return;
+    
+    if (videoRef.current.paused) {
+      // Activer le son avant de lancer la vidéo
+      videoRef.current.muted = false;
+      
+      videoRef.current.play()
+        .then(() => {
+          setIsPlaying(true);
+        })
+        .catch(error => {
+          console.error('Erreur lors de la lecture de la vidéo:', error);
+        });
+    } else {
+      videoRef.current.pause();
+      setIsPlaying(false);
+    }
+  };
+
   // Vérifier si l'écran est de taille mobile ou tablette
   useEffect(() => {
     const checkMobile = () => {
@@ -74,11 +100,6 @@ const Hero = () => {
     return () => {
       window.removeEventListener('resize', checkMobile);
     };
-  }, []);
-
-  // Détecter quand nous sommes côté client
-  useEffect(() => {
-    setIsClient(true);
   }, []);
 
   return (
@@ -112,23 +133,32 @@ const Hero = () => {
         </div>
         
         <div className={styles.heroVideoWide}>
-          {/* Version simplifiée de la vidéo avec contrôles natifs */}
-          <video 
-            ref={videoRef}
-            controls
-            muted
-            playsInline
-            preload="metadata"
-            poster="/images/capture_1745947510794.png"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }}
-          >
-            {/* Utiliser l'URL AWS S3 avec les bons paramètres */}
-            <source 
-              src="https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mp4" 
-              type="video/mp4" 
-            />
-            Votre navigateur ne prend pas en charge la lecture vidéo.
-          </video>
+          {/* Lecteur vidéo personnalisé avec bouton play au centre */}
+          <div className={styles.customVideoPlayer}>
+            <video 
+              ref={videoRef}
+              muted
+              playsInline
+              preload="metadata"
+              poster="/images/capture_1745947510794.png"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }}
+              onClick={togglePlay}
+            >
+              {/* Utiliser l'URL AWS S3 avec les bons paramètres */}
+              <source 
+                src="https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mp4" 
+                type="video/mp4" 
+              />
+              Votre navigateur ne prend pas en charge la lecture vidéo.
+            </video>
+            
+            {/* Bouton play au centre */}
+            {!isPlaying && (
+              <div className={styles.centerPlayIcon} onClick={togglePlay}>
+                <FaPlay />
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Description pour mobile et tablette uniquement */}
