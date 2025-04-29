@@ -43,7 +43,7 @@ const Hero = () => {
     
     // Utiliser l'API Image du navigateur pour précharger l'image
     const bgImage = new window.Image();
-    bgImage.src = '/images/image_test/image_test11.jpg';
+    bgImage.src = '/images/image_test/image_test4.jpg';
     
     bgImage.onload = () => {
       // L'image de fond est chargée
