@@ -107,15 +107,34 @@ const Hero = () => {
 
   const togglePlay = () => {
     if (videoRef.current) {
-      if (isPlaying) {
-        videoRef.current.pause();
-      } else {
-        videoRef.current.play();
-        // Activer le son lorsqu'on commence la lecture
-        videoRef.current.muted = false;
-        setIsMuted(false);
+      try {
+        if (isPlaying) {
+          videoRef.current.pause();
+        } else {
+          // Sur mobile, on doit utiliser une promesse pour gérer le play()
+          const playPromise = videoRef.current.play();
+          
+          if (playPromise !== undefined) {
+            playPromise
+              .then(() => {
+                // Lecture démarrée avec succès
+                // Activer le son lorsqu'on commence la lecture
+                videoRef.current!.muted = false;
+                setIsMuted(false);
+              })
+              .catch(error => {
+                // La lecture automatique a été empêchée
+                console.error('Erreur de lecture vidéo:', error);
+                // Ne pas changer l'état isPlaying si la lecture a échoué
+                return;
+              });
+          }
+        }
+        // Mettre à jour l'état uniquement si tout s'est bien passé
+        setIsPlaying(!isPlaying);
+      } catch (error) {
+        console.error('Erreur lors de la gestion de la vidéo:', error);
       }
-      setIsPlaying(!isPlaying);
     }
   };
 
@@ -157,7 +176,15 @@ const Hero = () => {
         </div>
       </div>
       
-      <div className={styles.heroVideoWide} onClick={togglePlay}>
+      <div 
+        className={styles.heroVideoWide} 
+        onClick={togglePlay}
+        onTouchEnd={(e) => {
+          // Empêcher le comportement par défaut qui peut causer des problèmes sur certains appareils mobiles
+          e.preventDefault();
+          togglePlay();
+        }}
+      >
         <video 
           ref={videoRef}
           autoPlay={false}
@@ -165,7 +192,10 @@ const Hero = () => {
           muted 
           playsInline
           preload="auto"
-          style={{ visibility: isClient && videoReady ? 'visible' : 'hidden' }}
+          style={{ visibility: isClient && videoReady ? 'visible' : 'visible' }}
+          controlsList="nodownload nofullscreen noremoteplayback"
+          disablePictureInPicture
+          onError={(e) => console.error('Erreur vidéo:', e)}
         >
           <source src="https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mp4" type="video/mp4" />
         </video>
