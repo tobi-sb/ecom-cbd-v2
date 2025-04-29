@@ -163,7 +163,7 @@ const Hero = () => {
             >
               {/* Utiliser l'URL AWS S3 avec les bons paramètres */}
               <source 
-                src="https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mp4" 
+                src="https://test-tobi.s3.eu-north-1.amazonaws.com/video.mp4" 
                 type="video/mp4" 
               />
               Votre navigateur ne prend pas en charge la lecture vidéo.
