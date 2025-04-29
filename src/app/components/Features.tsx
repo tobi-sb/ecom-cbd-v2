@@ -14,7 +14,7 @@ const Features = () => {
         <div className={styles.features}>
           <div className={styles.feature}>
             <div className={styles.featureIcon}>
-              <FontAwesomeIcon icon={faLeaf} size="2x" />
+              <FontAwesomeIcon icon={faLeaf} size="lg" />
             </div>
             <h3>100% Naturel</h3>
             <p>Cultivé sans pesticides ni produits chimiques</p>
@@ -22,7 +22,7 @@ const Features = () => {
           
           <div className={styles.feature}>
             <div className={styles.featureIcon}>
-              <FontAwesomeIcon icon={faCertificate} size="2x" />
+              <FontAwesomeIcon icon={faCertificate} size="lg" />
             </div>
             <h3>Qualité Premium</h3>
             <p>Des produits sélectionnés avec rigueur</p>
@@ -30,7 +30,7 @@ const Features = () => {
           
           <div className={styles.feature}>
             <div className={styles.featureIcon}>
-              <FontAwesomeIcon icon={faTruck} size="2x" />
+              <FontAwesomeIcon icon={faTruck} size="lg" />
             </div>
             <h3>Livraison Rapide</h3>
             <p>Livraison sous 48h dans toute la France</p>

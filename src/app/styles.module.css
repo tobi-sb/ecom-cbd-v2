@@ -669,8 +669,9 @@
   color: var(--color-accent);
   margin-bottom: 25px;
   border-radius: 50%;
-  font-size: 32px;
+  font-size: 28px; /* Réduire légèrement la taille de base */
   transition: all 0.4s ease;
+  overflow: hidden; /* Empêcher les icônes de déborder */
 }
 
 .feature:hover .featureIcon {
@@ -1164,7 +1165,18 @@
   }
 
   .hero h2 {
-    font-size: 36px;
+    font-size: 32px;
+  }
+  
+  /* Réduire la taille de tous les h2 sur mobile */
+  .products h2, .featuredCategories h2, .relatedProducts h2, .sectionTitle h2, .hero h2, .newsletter h2, .footerLogo h3, .footerLinks h4, .footerSocial h4 {
+    font-size: 26px !important;
+    margin-bottom: 40px;
+  }
+  
+  h2::after, .products h2::after, .featuredCategories h2::after, .sectionTitle h2::after {
+    bottom: -12px;
+    width: 50px;
   }
 
   .newsletterForm {
@@ -1244,6 +1256,24 @@
     width: 100%;
     max-width: 300px;
     margin: 0 auto;
+  }
+  
+  /* Réduire encore plus la taille des titres sur petits écrans */
+  .products h2, .featuredCategories h2, .relatedProducts h2, .sectionTitle h2, .hero h2, .newsletter h2, .footerLogo h3, .footerLinks h4, .footerSocial h4 {
+    font-size: 22px !important;
+    margin-bottom: 30px;
+  }
+  
+  h2::after, .products h2::after, .featuredCategories h2::after, .sectionTitle h2::after {
+    bottom: -10px;
+    width: 40px;
+    height: 2px;
+  }
+  
+  /* Réduire l'espacement entre les sections */
+  .products, .featuredCategories, .featuresSection {
+    padding-top: 50px;
+    padding-bottom: 50px;
   }
 }
 
