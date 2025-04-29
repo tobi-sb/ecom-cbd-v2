@@ -69,15 +69,51 @@ const Hero = () => {
     if (!videoRef.current) return;
     
     if (videoRef.current.paused) {
-      // Activer le son avant de lancer la vidéo
-      videoRef.current.muted = false;
+      // Détection iOS/Safari
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || 
+                   (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
       
+      // Sur iOS, on laisse la vidéo en muet pour la première lecture
+      // car iOS bloque la lecture automatique avec son
+      if (!isIOS) {
+        videoRef.current.muted = false;
+      }
+      
+      // Tentative de lecture
       videoRef.current.play()
         .then(() => {
           setIsPlaying(true);
+          console.log('Vidéo lancée avec succès');
+          
+          // Sur iOS, on essaie d'activer le son après le démarrage de la vidéo
+          if (isIOS) {
+            // Attendre un court instant avant d'essayer d'activer le son
+            setTimeout(() => {
+              try {
+                videoRef.current!.muted = false;
+                console.log('Son activé après démarrage');
+              } catch (e) {
+                console.warn('Impossible d’activer le son automatiquement:', e);
+              }
+            }, 500);
+          }
         })
         .catch(error => {
           console.error('Erreur lors de la lecture de la vidéo:', error);
+          
+          // En cas d'erreur sur iOS, on essaie de lire en muet
+          if (isIOS && videoRef.current && !videoRef.current.muted) {
+            console.log('Tentative de lecture en muet...');
+            videoRef.current.muted = true;
+            videoRef.current.play()
+              .then(() => {
+                setIsPlaying(true);
+                console.log('Vidéo lancée en muet avec succès');
+              })
+              .catch(secondError => {
+                console.error('Erreur lors de la seconde tentative de lecture:', secondError);
+              });
+          }
         });
     } else {
       videoRef.current.pause();
