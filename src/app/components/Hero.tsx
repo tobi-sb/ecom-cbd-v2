@@ -63,68 +63,17 @@ const Hero = () => {
     setIsClient(true);
   }, []);
 
-  // Configurer la vidéo pour afficher le frame à 3.5 secondes comme poster
+  // Utiliser une image statique comme poster pour la vidéo
   // Uniquement exécuté côté client pour éviter les erreurs d'hydratation
   useEffect(() => {
     if (!isClient) return;
     
-    // Créer une vidéo temporaire pour extraire le frame sans affecter l'affichage
-    const tempVideo = document.createElement('video');
-    tempVideo.src = '/video/version final .mp4';
-    tempVideo.muted = true;
-    tempVideo.preload = 'auto';
+    // Appliquer directement l'image statique comme poster
+    if (videoRef.current) {
+      videoRef.current.setAttribute('poster', '/images/capture_1745947510794.png');
+      setVideoReady(true);
+    }
     
-    // Fonction pour capturer le frame à 3.5 secondes
-    const captureFrame = () => {
-      // Créer un canvas pour capturer le frame
-      const canvas = document.createElement('canvas');
-      canvas.width = tempVideo.videoWidth;
-      canvas.height = tempVideo.videoHeight;
-      
-      // Dessiner le frame actuel sur le canvas
-      const ctx = canvas.getContext('2d');
-      if (ctx) {
-        ctx.drawImage(tempVideo, 0, 0, canvas.width, canvas.height);
-        
-        // Convertir le canvas en data URL
-        try {
-          const dataURL = canvas.toDataURL('image/jpeg');
-          
-          // Appliquer le poster à la vidéo visible et la rendre visible
-          if (videoRef.current) {
-            videoRef.current.setAttribute('poster', dataURL);
-            setVideoReady(true);
-          }
-        } catch (e) {
-          console.error('Error creating poster:', e);
-          setVideoReady(true); // Afficher la vidéo même en cas d'erreur
-        }
-      }
-      
-      // Nettoyer
-      tempVideo.removeEventListener('seeked', captureFrame);
-    };
-    
-    // Ajouter l'écouteur d'événement pour capturer le frame
-    tempVideo.addEventListener('seeked', captureFrame);
-    
-    // Charger la vidéo et aller à 3.5 secondes
-    tempVideo.addEventListener('loadedmetadata', () => {
-      tempVideo.currentTime = 3.5;
-    });
-    
-    // Gestion des erreurs
-    tempVideo.addEventListener('error', () => {
-      console.error('Error loading video for poster capture');
-      setVideoReady(true); // Afficher la vidéo même en cas d'erreur
-    });
-    
-    // Nettoyage
-    return () => {
-      tempVideo.removeEventListener('seeked', captureFrame);
-      tempVideo.removeEventListener('loadedmetadata', () => {});
-      tempVideo.removeEventListener('error', () => {});
-    };
   }, [isClient]); // Dépend de isClient pour s'assurer qu'il s'exécute uniquement côté client
 
   const togglePlay = () => {
@@ -181,7 +130,7 @@ const Hero = () => {
           preload="auto"
           style={{ visibility: isClient && videoReady ? 'visible' : 'hidden' }}
         >
-          <source src="/video/version final .mp4" type="video/mp4" />
+          <source src="https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mp4" type="video/mp4" />
         </video>
         
         {/* Icône de lecture centrale lorsque la vidéo est en pause */}
