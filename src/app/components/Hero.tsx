@@ -64,26 +64,19 @@ const Hero = () => {
     return () => clearTimeout(timeout);
   }, [isClient]);
 
-  // Détecter iOS/Safari
-  const [isIOS, setIsIOS] = useState(false);
-  
-  // Détecter iOS au chargement
-  useEffect(() => {
-    if (isClient) {
-      const iosDetected = /iPad|iPhone|iPod/.test(navigator.userAgent);
-      setIsIOS(iosDetected);
-      console.log('Détection iOS:', iosDetected);
-    }
-  }, [isClient]);
-  
-  // Gérer la lecture/pause de la vidéo - version avec solution de repli pour iOS
+  // Gérer la lecture/pause de la vidéo - version ultra simplifiée
   const togglePlay = () => {
     if (!videoRef.current) return;
     
+    // Détection iOS/Safari
+    const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
+    
     try {
       if (videoRef.current.paused) {
-        // Toujours commencer en muet
-        videoRef.current.muted = true;
+        // Toujours commencer en muet pour iOS
+        if (isIOS) {
+          videoRef.current.muted = true;
+        }
         
         // Lancer la vidéo
         videoRef.current.play()
@@ -91,22 +84,13 @@ const Hero = () => {
             setIsPlaying(true);
             console.log('Vidéo lancée avec succès');
             
-            // Sur les appareils non-iOS, on active le son après un court délai
+            // Sur les appareils non-iOS, on active le son
             if (!isIOS) {
-              setTimeout(() => {
-                if (videoRef.current) {
-                  videoRef.current.muted = false;
-                  console.log('Son activé');
-                }
-              }, 300);
+              videoRef.current!.muted = false;
             }
           })
           .catch(error => {
             console.error('Erreur de lecture vidéo:', error.message);
-            // En cas d'erreur, on affiche une alerte sur iOS
-            if (isIOS) {
-              alert('Pour voir la vidéo, veuillez ouvrir le site dans Safari et autoriser la lecture.');
-            }
           });
       } else {
         videoRef.current.pause();
@@ -165,57 +149,31 @@ const Hero = () => {
         </div>
         
         <div className={styles.heroVideoWide}>
-          {/* Lecteur vidéo personnalisé avec solution de repli pour iOS */}
+          {/* Lecteur vidéo personnalisé avec bouton play au centre */}
           <div className={styles.customVideoPlayer}>
-            {isIOS ? (
-              /* Solution de repli pour iOS : image statique avec bouton play */
-              <div 
-                className={styles.iosFallback}
-                style={{
-                  backgroundImage: `url('/images/capture_1745947510794.png')`,
-                  width: '100%',
-                  height: '100%',
-                  backgroundSize: 'cover',
-                  backgroundPosition: 'center',
-                  borderRadius: '14px',
-                  position: 'relative',
-                  cursor: 'pointer'
-                }}
-                onClick={() => {
-                  // Ouvrir la vidéo dans un nouvel onglet sur iOS
-                  window.open('https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mov', '_blank');
-                }}
-              >
-                <div className={styles.centerPlayIcon}>
-                  <FaPlay />
-                </div>
+            <video 
+              ref={videoRef}
+              muted
+              playsInline
+              controls={isPlaying} /* Afficher les contrôles natifs une fois la vidéo lancée */
+              preload="metadata"
+              poster="/images/capture_1745947510794.png"
+              style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }}
+              onClick={togglePlay}
+            >
+              {/* Utiliser l'URL AWS S3 avec les bons paramètres */}
+              <source 
+                src="https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mp4" 
+                type="video/mp4" 
+              />
+              Votre navigateur ne prend pas en charge la lecture vidéo.
+            </video>
+            
+            {/* Bouton play au centre - toujours visible sur mobile */}
+            {(!isPlaying || /iPad|iPhone|iPod/.test(navigator.userAgent)) && (
+              <div className={styles.centerPlayIcon} onClick={togglePlay}>
+                <FaPlay />
               </div>
-            ) : (
-              /* Lecteur vidéo normal pour les autres navigateurs */
-              <>
-                <video 
-                  ref={videoRef}
-                  muted
-                  playsInline={true}
-                  controls={isPlaying}
-                  preload="metadata"
-                  poster="/images/capture_1745947510794.png"
-                  style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }}
-                  onClick={togglePlay}
-                >
-                  <source 
-                    src="https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mp4" 
-                    type="video/mp4" 
-                  />
-                  Votre navigateur ne prend pas en charge la lecture vidéo.
-                </video>
-                
-                {!isPlaying && (
-                  <div className={styles.centerPlayIcon} onClick={togglePlay}>
-                    <FaPlay />
-                  </div>
-                )}
-              </>
             )}
           </div>
         </div>
