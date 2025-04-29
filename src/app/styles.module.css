@@ -338,7 +338,7 @@
   position: relative;
   overflow: hidden;
   background-color: var(--color-dark);
-  background-image: linear-gradient(rgba(15, 34, 20, 0.15), rgba(22, 58, 28, 0.15)), url('/images/image_test/image_test11.jpg');
+  background-image: linear-gradient(rgba(15, 34, 20, 0.15), rgba(22, 58, 28, 0.15)), url('/images/image_test/image_test4.jpg');
   background-size: cover;
   background-position: center;
   background-attachment: fixed; /* Fond fixe lors du défilement */
