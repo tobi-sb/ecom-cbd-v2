@@ -3,9 +3,18 @@
 import Image from 'next/image';
 import styles from '../styles.module.css';
 import { useState, useRef, useEffect } from 'react';
+import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
+import { 
+  faPlay, 
+  faPause, 
+  faVolumeUp, 
+  faVolumeMute 
+} from '@fortawesome/free-solid-svg-icons';
 import Loader from './Loader';
 
 const Hero = () => {
+  const [isPlaying, setIsPlaying] = useState(false);
+  const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -31,6 +40,8 @@ const Hero = () => {
 
   // Utiliser useEffect pour détecter le côté client
   const [isClient, setIsClient] = useState(false);
+  // Masquer la vidéo jusqu'à ce que le poster soit prêt
+  const [videoReady, setVideoReady] = useState(false);
   
   // Précharger l'image de fond du Hero
   useEffect(() => {
@@ -38,7 +49,7 @@ const Hero = () => {
     
     // Utiliser l'API Image du navigateur pour précharger l'image
     const bgImage = new window.Image();
-    bgImage.src = '/images/image_test/image_test4.jpg';
+    bgImage.src = '/images/image_test/image_test11.jpg';
     
     bgImage.onload = () => {
       // L'image de fond est chargée
@@ -81,6 +92,41 @@ const Hero = () => {
     setIsClient(true);
   }, []);
 
+  // Utiliser une image statique comme poster pour la vidéo
+  // Uniquement exécuté côté client pour éviter les erreurs d'hydratation
+  useEffect(() => {
+    if (!isClient) return;
+    
+    // Appliquer directement l'image statique comme poster
+    if (videoRef.current) {
+      videoRef.current.setAttribute('poster', '/images/capture_1745947510794.png');
+      setVideoReady(true);
+    }
+    
+  }, [isClient]); // Dépend de isClient pour s'assurer qu'il s'exécute uniquement côté client
+
+  const togglePlay = () => {
+    if (videoRef.current) {
+      if (isPlaying) {
+        videoRef.current.pause();
+      } else {
+        videoRef.current.play();
+        // Activer le son lorsqu'on commence la lecture
+        videoRef.current.muted = false;
+        setIsMuted(false);
+      }
+      setIsPlaying(!isPlaying);
+    }
+  };
+
+  const toggleMute = (e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent triggering the parent div's onClick
+    if (videoRef.current) {
+      videoRef.current.muted = !isMuted;
+      setIsMuted(!isMuted);
+    }
+  };
+
   return (
     <>
       {/* Loader qui s'affiche pendant le chargement de l'image de fond */}
@@ -91,56 +137,71 @@ const Hero = () => {
         ref={heroRef} 
         style={{ opacity: isLoading ? 0 : 1, transition: 'opacity 0.5s ease-in-out' }}>
 
-        <div className={styles.heroContent}>
-          <div className={styles.heroLogoContainer}>
-            <Image 
-              src="/images/logo_carre.png" 
-              alt="Jungle CBD Logo" 
-              width={0}
-              height={0}
-              sizes="100vw"
-              className={styles.heroLogo}
-              priority
-              style={{ 
-                backgroundColor: 'transparent',
-                width: '100%',
-                height: 'auto',
-                maxHeight: '400px'
-              }}
-            />
-          </div>
+      <div className={styles.heroContent}>
+        <div className={styles.heroLogoContainer}>
+          <Image 
+            src="/images/logo_carre.png" 
+            alt="Jungle CBD Logo" 
+            width={0}
+            height={0}
+            sizes="100vw"
+            className={styles.heroLogo}
+            priority
+            style={{ 
+              backgroundColor: 'transparent',
+              width: '100%',
+              height: 'auto',
+              maxHeight: '400px'
+            }}
+          />
         </div>
+      </div>
+      
+      <div className={styles.heroVideoWide} onClick={togglePlay}>
+        <video 
+          ref={videoRef}
+          autoPlay={false}
+          loop 
+          muted 
+          playsInline
+          preload="auto"
+          style={{ visibility: isClient && videoReady ? 'visible' : 'hidden' }}
+        >
+          <source src="https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mp4" type="video/mp4" />
+        </video>
         
-        <div className={styles.heroVideoWide}>
-          {/* Version simplifiée de la vidéo avec contrôles natifs */}
-          <video 
-            ref={videoRef}
-            controls
-            muted
-            playsInline
-            preload="metadata"
-            poster="/images/capture_1745947510794.png"
-            crossOrigin="anonymous"
-            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }}
-          >
-            {/* Utiliser l'URL AWS S3 avec les bons paramètres */}
-            <source 
-              src="https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mp4" 
-              type="video/mp4" 
-            />
-            Votre navigateur ne prend pas en charge la lecture vidéo.
-          </video>
-        </div>
-
-        {/* Description pour mobile et tablette uniquement */}
-        {isMobile && isClient && (
-          <div className={styles.heroMobileDescription}>
-            <p>Découvrez notre gamme de produits CBD de qualité supérieure, cultivés avec soin au cœur de la jungle pour vous offrir une expérience naturelle exceptionnelle. Nos produits sont rigoureusement testés pour garantir leur pureté et leur efficacité.</p>
+        {/* Icône de lecture centrale lorsque la vidéo est en pause */}
+        {!isPlaying && (
+          <div className={styles.centerPlayIcon}>
+            <FontAwesomeIcon icon={faPlay} />
           </div>
         )}
         
-        <div className={styles.heroBlurBottom}></div>
-      </section>
+        <div className={styles.videoControls}>
+          <button className={styles.playPauseBtn} aria-label={isPlaying ? 'Pause' : 'Play'}>
+            <FontAwesomeIcon icon={isPlaying ? faPause : faPlay} />
+          </button>
+          
+          <button 
+            className={styles.muteBtn} 
+            onClick={toggleMute}
+            aria-label={isMuted ? 'Unmute' : 'Mute'}
+          >
+            <FontAwesomeIcon icon={isMuted ? faVolumeMute : faVolumeUp} />
+          </button>
+        </div>
+      </div>
+
+      
+      {/* Description pour mobile et tablette uniquement */}
+      {isMobile && isClient && (
+        <div className={styles.heroMobileDescription}>
+          <p>Découvrez notre gamme de produits CBD de qualité supérieure, cultivés avec soin au cœur de la jungle pour vous offrir une expérience naturelle exceptionnelle. Nos produits sont rigoureusement testés pour garantir leur pureté et leur efficacité.</p>
+        </div>
+      )}
+      
+      <div className={styles.heroBlurBottom}></div>
+    </section>
     </>
   );
 };
