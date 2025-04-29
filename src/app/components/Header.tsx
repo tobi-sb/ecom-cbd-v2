@@ -168,7 +168,6 @@ const Header = () => {
       {isMobile && (
         <div 
           className={`${styles.mobileMenu} ${mobileMenuOpen ? styles.mobileMenuOpen : ''} ${isVisible ? styles.mobileMenuVisible : ''}`}
-          style={{ display: mobileMenuOpen ? 'block' : 'none' }}
         >
           <nav>
             <ul>
