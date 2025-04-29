@@ -3,18 +3,9 @@
 import Image from 'next/image';
 import styles from '../styles.module.css';
 import { useState, useRef, useEffect } from 'react';
-import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { 
-  faPlay, 
-  faPause, 
-  faVolumeUp, 
-  faVolumeMute 
-} from '@fortawesome/free-solid-svg-icons';
 import Loader from './Loader';
 
 const Hero = () => {
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [isMuted, setIsMuted] = useState(true);
   const videoRef = useRef<HTMLVideoElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const [isMobile, setIsMobile] = useState(false);
@@ -40,8 +31,6 @@ const Hero = () => {
 
   // Utiliser useEffect pour détecter le côté client
   const [isClient, setIsClient] = useState(false);
-  // Masquer la vidéo jusqu'à ce que le poster soit prêt
-  const [videoReady, setVideoReady] = useState(false);
   
   // Précharger l'image de fond du Hero
   useEffect(() => {
@@ -92,63 +81,11 @@ const Hero = () => {
     setIsClient(true);
   }, []);
 
-  // Utiliser une image statique comme poster pour la vidéo
-  // Uniquement exécuté côté client pour éviter les erreurs d'hydratation
-  useEffect(() => {
-    if (!isClient) return;
-    
-    // Appliquer directement l'image statique comme poster
-    if (videoRef.current) {
-      videoRef.current.setAttribute('poster', '/images/capture_1745947510794.png');
-      setVideoReady(true);
-    }
-    
-  }, [isClient]); // Dépend de isClient pour s'assurer qu'il s'exécute uniquement côté client
+  // Nous n'avons plus besoin de définir le poster en JavaScript
+  // car il est défini directement dans l'attribut poster de la balise video
 
-  const togglePlay = () => {
-    if (!videoRef.current) return;
-    
-    try {
-      if (isPlaying) {
-        // Si la vidéo est en cours de lecture, on la met en pause
-        videoRef.current.pause();
-        setIsPlaying(false);
-      } else {
-        // Si la vidéo est en pause, on la lance
-        // Utiliser une promesse pour gérer correctement la lecture sur mobile
-        const playPromise = videoRef.current.play();
-        
-        if (playPromise !== undefined) {
-          playPromise
-            .then(() => {
-              // La lecture a démarré avec succès
-              setIsPlaying(true);
-              // Désactiver le mode muet
-              if (videoRef.current) {
-                videoRef.current.muted = false;
-                setIsMuted(false);
-              }
-            })
-            .catch(error => {
-              console.error('Erreur de lecture vidéo:', error);
-              // Réinitialiser l'état en cas d'erreur
-              setIsPlaying(false);
-            });
-        }
-      }
-    } catch (error) {
-      console.error('Erreur lors de la gestion de la vidéo:', error);
-      setIsPlaying(false);
-    }
-  };
-
-  const toggleMute = (e: React.MouseEvent) => {
-    e.stopPropagation(); // Prevent triggering the parent div's onClick
-    if (videoRef.current) {
-      videoRef.current.muted = !isMuted;
-      setIsMuted(!isMuted);
-    }
-  };
+  // Nous n'avons plus besoin des fonctions de contrôle de la vidéo
+  // car nous utilisons les contrôles natifs du navigateur
 
   return (
     <>
