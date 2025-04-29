@@ -38,7 +38,7 @@ const Hero = () => {
     
     // Utiliser l'API Image du navigateur pour précharger l'image
     const bgImage = new window.Image();
-    bgImage.src = '/images/image_test/image_test11.jpg';
+    bgImage.src = '/images/image_test/image_test4.jpg';
     
     bgImage.onload = () => {
       // L'image de fond est chargée
@@ -81,12 +81,6 @@ const Hero = () => {
     setIsClient(true);
   }, []);
 
-  // Nous n'avons plus besoin de définir le poster en JavaScript
-  // car il est défini directement dans l'attribut poster de la balise video
-
-  // Nous n'avons plus besoin des fonctions de contrôle de la vidéo
-  // car nous utilisons les contrôles natifs du navigateur
-
   return (
     <>
       {/* Loader qui s'affiche pendant le chargement de l'image de fond */}
@@ -97,53 +91,51 @@ const Hero = () => {
         ref={heroRef} 
         style={{ opacity: isLoading ? 0 : 1, transition: 'opacity 0.5s ease-in-out' }}>
 
-      <div className={styles.heroContent}>
-        <div className={styles.heroLogoContainer}>
-          <Image 
-            src="/images/logo_carre.png" 
-            alt="Jungle CBD Logo" 
-            width={0}
-            height={0}
-            sizes="100vw"
-            className={styles.heroLogo}
-            priority
-            style={{ 
-              backgroundColor: 'transparent',
-              width: '100%',
-              height: 'auto',
-              maxHeight: '400px'
-            }}
-          />
+        <div className={styles.heroContent}>
+          <div className={styles.heroLogoContainer}>
+            <Image 
+              src="/images/logo_carre.png" 
+              alt="Jungle CBD Logo" 
+              width={0}
+              height={0}
+              sizes="100vw"
+              className={styles.heroLogo}
+              priority
+              style={{ 
+                backgroundColor: 'transparent',
+                width: '100%',
+                height: 'auto',
+                maxHeight: '400px'
+              }}
+            />
+          </div>
         </div>
-      </div>
-      
-      <div className={styles.heroVideoWide}>
-        {/* Utiliser une balise video avec les contrôles natifs pour une meilleure compatibilité mobile */}
-        <video 
-          ref={videoRef}
-          controls
-          loop 
-          playsInline
-          preload="auto"
-          poster="/images/capture_1745947510794.png"
-          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }}
-        >
-          <source src="https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mp4" type="video/mp4" />
-          Votre navigateur ne prend pas en charge la lecture vidéo.
-        </video>
-        {/* Les contrôles natifs du navigateur sont utilisés à la place des contrôles personnalisés */}
-      </div>
+        
+        <div className={styles.heroVideoWide}>
+          {/* Version simplifiée de la vidéo avec contrôles natifs */}
+          <video 
+            ref={videoRef}
+            controls
+            muted
+            playsInline
+            preload="metadata"
+            poster="/images/capture_1745947510794.png"
+            style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }}
+          >
+            <source src="/video/version final .mp4" type="video/mp4" />
+            Votre navigateur ne prend pas en charge la lecture vidéo.
+          </video>
+        </div>
 
-      
-      {/* Description pour mobile et tablette uniquement */}
-      {isMobile && isClient && (
-        <div className={styles.heroMobileDescription}>
-          <p>Découvrez notre gamme de produits CBD de qualité supérieure, cultivés avec soin au cœur de la jungle pour vous offrir une expérience naturelle exceptionnelle. Nos produits sont rigoureusement testés pour garantir leur pureté et leur efficacité.</p>
-        </div>
-      )}
-      
-      <div className={styles.heroBlurBottom}></div>
-    </section>
+        {/* Description pour mobile et tablette uniquement */}
+        {isMobile && isClient && (
+          <div className={styles.heroMobileDescription}>
+            <p>Découvrez notre gamme de produits CBD de qualité supérieure, cultivés avec soin au cœur de la jungle pour vous offrir une expérience naturelle exceptionnelle. Nos produits sont rigoureusement testés pour garantir leur pureté et leur efficacité.</p>
+          </div>
+        )}
+        
+        <div className={styles.heroBlurBottom}></div>
+      </section>
     </>
   );
 };
