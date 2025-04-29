@@ -120,9 +120,14 @@ const Hero = () => {
             playsInline
             preload="metadata"
             poster="/images/capture_1745947510794.png"
+            crossOrigin="anonymous"
             style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }}
           >
-            <source src="/video/version final .mp4" type="video/mp4" />
+            {/* Utiliser l'URL AWS S3 avec les bons paramètres */}
+            <source 
+              src="https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mp4" 
+              type="video/mp4" 
+            />
             Votre navigateur ne prend pas en charge la lecture vidéo.
           </video>
         </div>
