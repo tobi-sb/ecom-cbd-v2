@@ -10,6 +10,7 @@ import {
   faVolumeUp, 
   faVolumeMute 
 } from '@fortawesome/free-solid-svg-icons';
+import Loader from './Loader';
 
 const Hero = () => {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -17,6 +18,7 @@ const Hero = () => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const heroRef = useRef<HTMLElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isLoading, setIsLoading] = useState(true); // État pour le loader
 
   // Effet de parallaxe lors du défilement
   useEffect(() => {
@@ -40,6 +42,33 @@ const Hero = () => {
   const [isClient, setIsClient] = useState(false);
   // Masquer la vidéo jusqu'à ce que le poster soit prêt
   const [videoReady, setVideoReady] = useState(false);
+  
+  // Précharger l'image de fond du Hero
+  useEffect(() => {
+    if (!isClient) return;
+    
+    // Utiliser l'API Image du navigateur pour précharger l'image
+    const bgImage = new window.Image();
+    bgImage.src = '/images/image_test/image_test11.jpg';
+    
+    bgImage.onload = () => {
+      // L'image de fond est chargée
+      setIsLoading(false);
+    };
+    
+    bgImage.onerror = () => {
+      // En cas d'erreur, on affiche quand même le contenu
+      console.error('Erreur lors du chargement de l\'image de fond');
+      setIsLoading(false);
+    };
+    
+    // Timeout de sécurité pour éviter un blocage infini
+    const timeout = setTimeout(() => {
+      setIsLoading(false);
+    }, 5000); // 5 secondes maximum d'attente
+    
+    return () => clearTimeout(timeout);
+  }, [isClient]);
   
   // Vérifier si l'écran est de taille mobile ou tablette
   useEffect(() => {
@@ -99,7 +128,15 @@ const Hero = () => {
   };
 
   return (
-    <section className={styles.hero} ref={heroRef}>
+    <>
+      {/* Loader qui s'affiche pendant le chargement de l'image de fond */}
+      <Loader isLoading={isLoading} />
+      
+      <section 
+        className={`${styles.hero} ${!isLoading ? styles.heroVisible : ''}`} 
+        ref={heroRef} 
+        style={{ opacity: isLoading ? 0 : 1, transition: 'opacity 0.5s ease-in-out' }}>
+
       <div className={styles.heroContent}>
         <div className={styles.heroLogoContainer}>
           <Image 
@@ -165,6 +202,7 @@ const Hero = () => {
       
       <div className={styles.heroBlurBottom}></div>
     </section>
+    </>
   );
 };
 

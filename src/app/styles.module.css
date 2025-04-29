@@ -306,6 +306,13 @@
   max-width: 100%;
   margin: 0 auto;
   gap: 20px; /* Réduit de 60px à 20px pour rapprocher les éléments */
+  opacity: 0; /* Masqué par défaut */
+  transition: opacity 0.8s ease-in-out;
+}
+
+/* Classe pour afficher le hero une fois l'image chargée */
+.heroVisible {
+  opacity: 1;
 }
 
 .hero::before {
@@ -3247,4 +3254,108 @@
     padding: 1rem;
     margin: 1rem auto;
   }
+}
+
+/* Loader Styles - Thème Jungle */
+.loaderContainer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background-color: var(--color-dark);
+  z-index: 9999;
+  transition: opacity 0.5s ease-out, visibility 0.5s ease-out;
+  overflow: hidden;
+  background-image: linear-gradient(rgba(15, 34, 20, 0.95), rgba(22, 58, 28, 0.95));
+}
+
+/* Effet de lumière subtil en arrière-plan */
+.loaderContainer::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, rgba(var(--color-accent-rgb), 0.1) 0%, transparent 70%);
+  z-index: -1;
+  opacity: 0.6;
+  animation: pulseLight 4s ease-in-out infinite;
+}
+
+@keyframes pulseLight {
+  0%, 100% { opacity: 0.4; transform: scale(0.95); }
+  50% { opacity: 0.6; transform: scale(1.05); }
+}
+
+/* Loader principal */
+.loader {
+  width: 100px;
+  height: 100px;
+  position: relative;
+  margin-bottom: 30px;
+}
+
+/* Cercle extérieur */
+.loaderInner {
+  width: 100%;
+  height: 100%;
+  border: 6px solid rgba(var(--color-accent-rgb), 0.2);
+  border-top-color: var(--color-accent);
+  border-radius: 50%;
+  animation: spinVine 1.5s ease-in-out infinite;
+  box-shadow: 0 0 20px rgba(var(--color-accent-rgb), 0.3);
+}
+
+/* Texte de chargement */
+.loaderText {
+  color: var(--color-accent);
+  font-size: 18px;
+  font-weight: 600;
+  letter-spacing: 2px;
+  margin-top: 20px;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  position: relative;
+  padding: 0 15px;
+  animation: glowText 2s ease-in-out infinite;
+}
+
+/* Lianes décoratives autour du texte */
+.loaderText::before,
+.loaderText::after {
+  content: '';
+  position: absolute;
+  height: 2px;
+  width: 30px;
+  background-color: var(--color-accent);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+.loaderText::before {
+  left: -40px;
+  animation: growVine 1.5s ease-in-out infinite;
+}
+
+.loaderText::after {
+  right: -40px;
+  animation: growVine 1.5s ease-in-out infinite 0.5s;
+}
+
+@keyframes spinVine {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes glowText {
+  0%, 100% { opacity: 0.8; text-shadow: 0 0 5px rgba(var(--color-accent-rgb), 0.5); }
+  50% { opacity: 1; text-shadow: 0 0 15px rgba(var(--color-accent-rgb), 0.8); }
+}
+
+@keyframes growVine {
+  0%, 100% { width: 30px; opacity: 0.6; }
+  50% { width: 50px; opacity: 1; }
 }
