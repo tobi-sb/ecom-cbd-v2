@@ -106,35 +106,39 @@ const Hero = () => {
   }, [isClient]); // Dépend de isClient pour s'assurer qu'il s'exécute uniquement côté client
 
   const togglePlay = () => {
-    if (videoRef.current) {
-      try {
-        if (isPlaying) {
-          videoRef.current.pause();
-        } else {
-          // Sur mobile, on doit utiliser une promesse pour gérer le play()
-          const playPromise = videoRef.current.play();
-          
-          if (playPromise !== undefined) {
-            playPromise
-              .then(() => {
-                // Lecture démarrée avec succès
-                // Activer le son lorsqu'on commence la lecture
-                videoRef.current!.muted = false;
+    if (!videoRef.current) return;
+    
+    try {
+      if (isPlaying) {
+        // Si la vidéo est en cours de lecture, on la met en pause
+        videoRef.current.pause();
+        setIsPlaying(false);
+      } else {
+        // Si la vidéo est en pause, on la lance
+        // Utiliser une promesse pour gérer correctement la lecture sur mobile
+        const playPromise = videoRef.current.play();
+        
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              // La lecture a démarré avec succès
+              setIsPlaying(true);
+              // Désactiver le mode muet
+              if (videoRef.current) {
+                videoRef.current.muted = false;
                 setIsMuted(false);
-              })
-              .catch(error => {
-                // La lecture automatique a été empêchée
-                console.error('Erreur de lecture vidéo:', error);
-                // Ne pas changer l'état isPlaying si la lecture a échoué
-                return;
-              });
-          }
+              }
+            })
+            .catch(error => {
+              console.error('Erreur de lecture vidéo:', error);
+              // Réinitialiser l'état en cas d'erreur
+              setIsPlaying(false);
+            });
         }
-        // Mettre à jour l'état uniquement si tout s'est bien passé
-        setIsPlaying(!isPlaying);
-      } catch (error) {
-        console.error('Erreur lors de la gestion de la vidéo:', error);
       }
+    } catch (error) {
+      console.error('Erreur lors de la gestion de la vidéo:', error);
+      setIsPlaying(false);
     }
   };
 
@@ -176,50 +180,21 @@ const Hero = () => {
         </div>
       </div>
       
-      <div 
-        className={styles.heroVideoWide} 
-        onClick={togglePlay}
-        onTouchEnd={(e) => {
-          // Empêcher le comportement par défaut qui peut causer des problèmes sur certains appareils mobiles
-          e.preventDefault();
-          togglePlay();
-        }}
-      >
+      <div className={styles.heroVideoWide}>
+        {/* Utiliser une balise video avec les contrôles natifs pour une meilleure compatibilité mobile */}
         <video 
           ref={videoRef}
-          autoPlay={false}
+          controls
           loop 
-          muted 
           playsInline
           preload="auto"
-          style={{ visibility: isClient && videoReady ? 'visible' : 'visible' }}
-          controlsList="nodownload nofullscreen noremoteplayback"
-          disablePictureInPicture
-          onError={(e) => console.error('Erreur vidéo:', e)}
+          poster="/images/capture_1745947510794.png"
+          style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }}
         >
           <source src="https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mp4" type="video/mp4" />
+          Votre navigateur ne prend pas en charge la lecture vidéo.
         </video>
-        
-        {/* Icône de lecture centrale lorsque la vidéo est en pause */}
-        {!isPlaying && (
-          <div className={styles.centerPlayIcon}>
-            <FontAwesomeIcon icon={faPlay} />
-          </div>
-        )}
-        
-        <div className={styles.videoControls}>
-          <button className={styles.playPauseBtn} aria-label={isPlaying ? 'Pause' : 'Play'}>
-            <FontAwesomeIcon icon={isPlaying ? faPause : faPlay} />
-          </button>
-          
-          <button 
-            className={styles.muteBtn} 
-            onClick={toggleMute}
-            aria-label={isMuted ? 'Unmute' : 'Mute'}
-          >
-            <FontAwesomeIcon icon={isMuted ? faVolumeMute : faVolumeUp} />
-          </button>
-        </div>
+        {/* Les contrôles natifs du navigateur sont utilisés à la place des contrôles personnalisés */}
       </div>
 
       
