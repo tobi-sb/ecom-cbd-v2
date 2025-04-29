@@ -183,7 +183,7 @@ const Hero = () => {
                 }}
                 onClick={() => {
                   // Ouvrir la vidéo dans un nouvel onglet sur iOS
-                  window.open('https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mp4', '_blank');
+                  window.open('https://test-tobi.s3.eu-north-1.amazonaws.com/version+final+finaliste+.mov', '_blank');
                 }}
               >
                 <div className={styles.centerPlayIcon}>
