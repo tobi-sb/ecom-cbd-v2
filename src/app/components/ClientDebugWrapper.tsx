@@ -8,5 +8,6 @@ const DebugLogger = dynamic(() => import('./DebugLogger'), {
 });
 
 export default function ClientDebugWrapper() {
-  return <DebugLogger />;
+  // Return null to remove the debug button from the website
+  return null;
 }

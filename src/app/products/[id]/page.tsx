@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useParams, useRouter } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
 import styles from '../../styles.module.css';
@@ -15,7 +15,8 @@ import {
   faShoppingCart,
   faHeart,
   faMinus,
-  faPlus
+  faPlus,
+  faCheck
 } from '@fortawesome/free-solid-svg-icons';
 import { 
   faFacebookF, 
@@ -25,10 +26,12 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import { faStar as farStar } from '@fortawesome/free-regular-svg-icons';
 import { faHeart as farHeart } from '@fortawesome/free-regular-svg-icons';
-import { getDetailedProduct } from '../../data/products';
+import { getDetailedProduct, getProductColorVariants } from '@/services/product.service';
+import { ProductWithPrices, ColorVariant } from '@/types/database.types';
+import { useCart } from '@/contexts/CartContext';
 
 // Fonction pour afficher les étoiles de notation
-const renderRating = (rating: number) => {
+const renderRating = (rating: number = 5) => {
   const stars = [];
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 !== 0;
@@ -50,17 +53,73 @@ const renderRating = (rating: number) => {
 };
 
 export default function ProductDetailPage() {
+  const router = useRouter();
   const { id } = useParams();
   const productId = typeof id === 'string' ? id : id?.[0] || '1';
-  const product = getDetailedProduct(productId);
+  const { addToCart } = useCart();
   
-  const [mainImage, setMainImage] = useState(product.images[0]);
-  const [selectedWeight, setSelectedWeight] = useState(product.weightOptions && product.weightOptions.length > 0 ? product.weightOptions[0].weight : 'Standard');
+  const [product, setProduct] = useState<ProductWithPrices | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [mainImage, setMainImage] = useState<string>('');
+  const [selectedWeight, setSelectedWeight] = useState<string>('default');
   const [quantity, setQuantity] = useState(1);
   const [activeTab, setActiveTab] = useState('description');
   const [isFavorite, setIsFavorite] = useState(false);
+  const [addingToCart, setAddingToCart] = useState(false);
+  const [showNotification, setShowNotification] = useState(false);
+  const [colorVariants, setColorVariants] = useState<ColorVariant[]>([]);
+  const [selectedVariant, setSelectedVariant] = useState<ColorVariant | null>(null);
 
-  const selectedWeightOption = product.weightOptions && product.weightOptions.find(option => option.weight === selectedWeight) || (product.weightOptions && product.weightOptions[0]);
+  useEffect(() => {
+    const fetchProduct = async () => {
+      setLoading(true);
+      try {
+        const [productData, variants] = await Promise.all([
+          getDetailedProduct(productId),
+          getProductColorVariants(productId)
+        ]);
+        
+        if (!productData) {
+          console.error(`Product with ID ${productId} not found`);
+          router.push('/products');
+          return;
+        }
+        
+        setProduct(productData);
+        setColorVariants(variants);
+        
+        // Set default values
+        if (productData.image_url) {
+          setMainImage(productData.image_url);
+        }
+        
+        // Set default selected variant to Basic (main image)
+        setSelectedVariant(null);
+        
+        if (productData.weightOptions && productData.weightOptions.length > 0) {
+          setSelectedWeight(productData.weightOptions[0].weight);
+        }
+      } catch (error) {
+        console.error("Failed to fetch product:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchProduct();
+  }, [productId, router]);
+  
+  if (loading || !product) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.spinner}></div>
+        <p>Chargement du produit...</p>
+      </div>
+    );
+  }
+  
+  const selectedWeightOption = product.weightOptions.find(option => option.weight === selectedWeight) || product.weightOptions[0];
+  const categoryDetails = product.categories as any;
   
   const incrementQuantity = () => {
     if (quantity < 10) {
@@ -75,13 +134,57 @@ export default function ProductDetailPage() {
   };
 
   const handleAddToCart = () => {
-    console.log(`Added to cart: ${product.name}, Weight: ${selectedWeight}, Quantity: ${quantity}, Price: ${selectedWeightOption?.price || product.price}`);
-    // Logique d'ajout au panier à implémenter
+    if (!product) return;
+    
+    setAddingToCart(true);
+    
+    // Add product to cart with the selected weight and price
+    addToCart({
+      id: product.weightOptions.length > 1 
+          ? `${product.id}-${selectedWeight}` 
+          : product.id,
+      name: product.weightOptions.length > 1 && selectedWeight !== 'default'
+          ? `${product.name} - ${selectedWeight}`
+          : product.name,
+      price: selectedWeightOption?.price || 0,
+      image: product.image_url || '/images/placeholder-product.jpg',
+      description: product.description,
+      quantity: quantity
+    });
+    
+    // Show feedback for a short time
+    setTimeout(() => {
+      setAddingToCart(false);
+      setShowNotification(true);
+      
+      // Hide notification after 3 seconds
+      setTimeout(() => {
+        setShowNotification(false);
+      }, 3000);
+    }, 500);
   };
 
   const toggleFavorite = () => {
     setIsFavorite(!isFavorite);
   };
+
+  const handleVariantSelect = (variant: ColorVariant) => {
+    setSelectedVariant(variant);
+    if (variant.image_url) {
+      setMainImage(variant.image_url);
+    } else {
+      // If variant has no image, fall back to main product image
+      setMainImage(product?.image_url || '');
+    }
+  };
+
+  const getAdjustedPrice = (basePrice: number) => {
+    if (!selectedVariant) return basePrice;
+    return basePrice + (selectedVariant.price_adjustment || 0);
+  };
+
+  // Default product images if none are provided
+  const productImages = [product.image_url || '/images/placeholder-product.jpg'];
 
   return (
     <>
@@ -91,6 +194,13 @@ export default function ProductDetailPage() {
           <ul className={styles.breadcrumbList}>
             <li><Link href="/">Accueil</Link></li>
             <li><Link href="/products">Produits</Link></li>
+            {categoryDetails && (
+              <li>
+                <Link href={`/products?category=${categoryDetails.slug}`}>
+                  {categoryDetails.name}
+                </Link>
+              </li>
+            )}
             <li>{product.name}</li>
           </ul>
         </div>
@@ -104,7 +214,7 @@ export default function ProductDetailPage() {
             <div className={styles.productGallery}>
               <div className={styles.productMainImage}>
                 <Image 
-                  src={mainImage} 
+                  src={mainImage || '/images/placeholder-product.jpg'} 
                   alt={product.name}
                   width={500}
                   height={500}
@@ -124,15 +234,32 @@ export default function ProductDetailPage() {
               </div>
               
               <div className={styles.productThumbnails}>
-                {product.images.map((image, index) => (
+                {/* Main product image thumbnail */}
+                <div 
+                  className={`${styles.thumbnail} ${!selectedVariant ? styles.active : ''}`}
+                  onClick={() => {
+                    setSelectedVariant(null);
+                    setMainImage(product?.image_url || '');
+                  }}
+                >
+                  <Image 
+                    src={product?.image_url || '/images/placeholder-product.jpg'} 
+                    alt={product?.name || 'Product'}
+                    width={100}
+                    height={100}
+                    style={{ objectFit: 'cover' }}
+                  />
+                </div>
+                {/* Color variant thumbnails */}
+                {colorVariants.map((variant) => (
                   <div 
-                    key={index} 
-                    className={`${styles.thumbnail} ${mainImage === image ? styles.active : ''}`}
-                    onClick={() => setMainImage(image)}
+                    key={variant.id} 
+                    className={`${styles.thumbnail} ${selectedVariant?.id === variant.id ? styles.active : ''}`}
+                    onClick={() => handleVariantSelect(variant)}
                   >
                     <Image 
-                      src={image} 
-                      alt={`${product.name} - Image ${index + 1}`}
+                      src={variant.image_url || product?.image_url || '/images/placeholder-product.jpg'} 
+                      alt={`${product?.name} - ${variant.color_name}`}
                       width={100}
                       height={100}
                       style={{ objectFit: 'cover' }}
@@ -145,20 +272,70 @@ export default function ProductDetailPage() {
             {/* Product Info */}
             <div className={styles.productInfoContainer}>
               <h1 className={styles.productTitle}>{product.name}</h1>
+              {categoryDetails && (
+                <div className={styles.productCategory}>
+                  <Link href={`/products?category=${categoryDetails.slug}`}>
+                    {categoryDetails.name}
+                  </Link>
+                </div>
+              )}
+              
+              {/* Color Variants */}
+              {colorVariants.length > 0 && (
+                <div className={styles.colorVariants}>
+                  <h3>Couleurs disponibles</h3>
+                  <div className={styles.variantOptions}>
+                    {/* Add Basic option */}
+                    <button
+                      key="basic"
+                      className={`${styles.variantOption} ${selectedVariant === null ? styles.active : ''}`}
+                      onClick={() => {
+                        setSelectedVariant(null);
+                        setMainImage(product?.image_url || '');
+                      }}
+                      style={selectedVariant === null ? {} : { border: '1px solid #0f3f16' }}
+                    >
+                      <div 
+                        className={styles.variantColor} 
+                        style={selectedVariant === null ? {} : { border: '1px solid #0f3f16' }}
+                      />
+                      <span>Basic</span>
+                    </button>
+                    {/* Color variant thumbnails */}
+                    {colorVariants.map((variant) => (
+                      <button
+                        key={variant.id}
+                        className={`${styles.variantOption} ${selectedVariant?.id === variant.id ? styles.active : ''}`}
+                        onClick={() => handleVariantSelect(variant)}
+                        style={selectedVariant?.id === variant.id ? {} : { border: '1px solid #0f3f16' }}
+                      >
+                        <div 
+                          className={styles.variantColor} 
+                          style={{
+                            backgroundColor: variant.color_name,
+                            ...(selectedVariant?.id === variant.id ? {} : { border: '1px solid #0f3f16' })
+                          }} 
+                        />
+                        <span>{variant.color_name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
               <div className={styles.productMeta}>
                 <div className={styles.productRating}>
-                  {renderRating(product.rating)}
-                  <span className={styles.ratingCount}>({product.rating}) - {product.reviewCount || 0} avis</span>
+                  {renderRating(5)}
+                  <span className={styles.ratingCount}>(5.0) - 0 avis</span>
                 </div>
-                {product.sku && <span className={styles.productSku}>SKU: {product.sku}</span>}
               </div>
               
               <div className={styles.productPrice}>
-                <span className={styles.priceAmount}>{(selectedWeightOption?.price || product.price).toFixed(2)}€</span>
-                {product.originalPrice && (
-                  <span className={styles.originalPrice}>
-                    <del>{product.originalPrice.toFixed(2)}€</del> {product.discount}
-                  </span>
+                <span className={styles.priceAmount}>
+                  {getAdjustedPrice(selectedWeightOption.price).toFixed(2)}€
+                </span>
+                {selectedWeight !== 'default' && (
+                <span className={styles.priceWeight}>pour {selectedWeight}</span>
                 )}
               </div>
               
@@ -166,19 +343,9 @@ export default function ProductDetailPage() {
                 <p>{product.description}</p>
               </div>
               
-              {product.attributes && (
-                <div className={styles.productAttributes}>
-                  {Object.entries(product.attributes || {}).map(([name, value], index) => (
-                    <div key={index} className={styles.attribute}>
-                      <span className={styles.attributeName}>{name}:</span>
-                      <span className={styles.attributeValue}>{value}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-              
-              <div className={styles.productForm}>
-                {product.weightOptions && product.weightOptions.length > 0 && (
+              {/* Weight Options Section - Moved above attributes */}
+              <div className={styles.productForm} style={{ marginBottom: '20px' }}>
+                {product.weightOptions.length > 1 && (
                   <div className={styles.formGroup}>
                     <label htmlFor="weight">Poids</label>
                     <div className={styles.optionButtons}>
@@ -194,28 +361,54 @@ export default function ProductDetailPage() {
                     </div>
                   </div>
                 )}
-                
+              </div>
+              
+              <div className={styles.productAttributes}>
+                <div className={styles.attribute}>
+                  <span className={styles.attributeName}>Origine:</span>
+                  <span className={styles.attributeValue}>{product.origin}</span>
+                </div>
+                <div className={styles.attribute}>
+                  <span className={styles.attributeName}>CBD:</span>
+                  <span className={styles.attributeValue}>{product.cbd_percentage}%</span>
+                </div>
+                <div className={styles.attribute}>
+                  <span className={styles.attributeName}>Culture:</span>
+                  <span className={styles.attributeValue}>{product.culture_type === 'indoor' ? 'Indoor' : 'Outdoor'}</span>
+                </div>
+                {categoryDetails && (
+                  <div className={styles.attribute}>
+                    <span className={styles.attributeName}>Catégorie:</span>
+                    <span className={styles.attributeValue}>{categoryDetails.name}</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Quantity and Actions Section */}
+              <div className={styles.productForm} style={{ marginTop: '20px' }}>
                 <div className={`${styles.formGroup} ${styles.quantity}`}>
                   <label htmlFor="quantity">Quantité</label>
                   <div className={styles.quantitySelector}>
                     <button 
-                      className={`${styles.quantityBtn} ${styles.minus}`}
-                      onClick={decrementQuantity}
+                      className={styles.quantityBtn} 
+                      onClick={decrementQuantity} 
+                      disabled={quantity <= 1}
                     >
                       <FontAwesomeIcon icon={faMinus} />
                     </button>
                     <input 
-                      type="number" 
-                      id="quantity" 
-                      name="quantity" 
+                      type="number"
+                      id="quantity"
                       value={quantity}
-                      min="1" 
+                      min="1"
                       max="10"
-                      onChange={(e) => setQuantity(parseInt(e.target.value) || 1)}
+                      readOnly
+                      className={styles.quantityInput}
                     />
                     <button 
-                      className={`${styles.quantityBtn} ${styles.plus}`}
+                      className={styles.quantityBtn} 
                       onClick={incrementQuantity}
+                      disabled={quantity >= 10}
                     >
                       <FontAwesomeIcon icon={faPlus} />
                     </button>
@@ -224,13 +417,15 @@ export default function ProductDetailPage() {
                 
                 <div className={styles.productActions}>
                   <button 
-                    className={`${styles.btnPrimary} ${styles.btnAddToCart}`}
+                    className={`${styles.btnPrimary} ${addingToCart ? styles.adding : ''}`} 
                     onClick={handleAddToCart}
+                    disabled={addingToCart}
                   >
-                    <FontAwesomeIcon icon={faShoppingCart} /> Ajouter au panier
+                    <FontAwesomeIcon icon={faShoppingCart} className={styles.btnIcon} />
+                    {addingToCart ? 'Ajout en cours...' : 'Ajouter au panier'}
                   </button>
                   <button 
-                    className={styles.btnWishlist}
+                    className={`${styles.btnFavorite} ${isFavorite ? styles.active : ''}`}
                     onClick={toggleFavorite}
                   >
                     <FontAwesomeIcon icon={isFavorite ? faHeart : farHeart} />
@@ -238,182 +433,200 @@ export default function ProductDetailPage() {
                 </div>
               </div>
               
-              <div className={styles.productMetaInfo}>
-                <div className={styles.metaItem}>
-                  <FontAwesomeIcon icon={faShieldAlt} />
-                  <span>Testé en laboratoire</span>
-                </div>
-                <div className={styles.metaItem}>
-                  <FontAwesomeIcon icon={faTruck} />
-                  <span>Livraison gratuite dès 50€</span>
-                </div>
-                <div className={styles.metaItem}>
-                  <FontAwesomeIcon icon={faLeaf} />
-                  <span>Agriculture biologique</span>
-                </div>
-              </div>
-              
-              <div className={styles.productShare}>
-                <span>Partager:</span>
-                <div className={styles.socialShare}>
-                  <Link href="#"><FontAwesomeIcon icon={faFacebookF} /></Link>
-                  <Link href="#"><FontAwesomeIcon icon={faTwitter} /></Link>
-                  <Link href="#"><FontAwesomeIcon icon={faPinterestP} /></Link>
-                  <Link href="#"><FontAwesomeIcon icon={faInstagram} /></Link>
-                </div>
-              </div>
-            </div>
-          </div>
-          
-          {/* Product Tabs */}
-          <div className={styles.productTabs}>
-            <div className={styles.tabButtons}>
-              <button 
-                className={`${styles.tabBtn} ${activeTab === 'description' ? styles.active : ''}`}
-                onClick={() => setActiveTab('description')}
-              >
-                Description
-              </button>
-              <button 
-                className={`${styles.tabBtn} ${activeTab === 'additional' ? styles.active : ''}`}
-                onClick={() => setActiveTab('additional')}
-              >
-                Informations complémentaires
-              </button>
-              <button 
-                className={`${styles.tabBtn} ${activeTab === 'reviews' ? styles.active : ''}`}
-                onClick={() => setActiveTab('reviews')}
-              >
-                Avis ({product.reviewCount || 0})
-              </button>
-            </div>
-            
-            <div className={styles.tabContent}>
-              {activeTab === 'description' && (
-                <div className={styles.productDescription}>
-                  <h3>Description du produit</h3>
-                  <p>{product.description}</p>
-                  <p>Le Gorilla Glue CBD est une fleur de cannabis légale (taux de THC &lt; 0,2%) cultivée avec soin et séchée avec précision pour préserver ses arômes et propriétés. Idéale pour la relaxation, cette variété délivre un effet apaisant sans les effets psychotropes du THC.</p>
-                </div>
-              )}
-              
-              {activeTab === 'additional' && product.additionalInfo && (
-                <div className={styles.additionalInfo}>
-                  <h3>Informations complémentaires</h3>
-                  <div className={styles.infoTable}>
-                    {Object.entries(product.additionalInfo).map(([name, value], index) => (
-                      <div key={index} className={styles.infoRow}>
-                        <div className={styles.infoName}>{name}</div>
-                        <div className={styles.infoValue}>{value}</div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-              
-              {activeTab === 'reviews' && (
-                <div className={styles.reviewsTab}>
-                  <div className={styles.reviewSummary}>
-                    <div className={styles.summaryBox}>
-                      <div className={styles.ratingBig}>{product.rating.toFixed(1)}</div>
-                      <div className={styles.ratingStars}>
-                        {renderRating(product.rating)}
-                      </div>
-                      <div className={styles.totalReviews}>Basé sur {product.reviewCount || 0} avis</div>
+              <div className={styles.productFeatures}>
+                <div className={styles.feature}>
+                  <div className={styles.featureIcon}>
+                    <div className={styles.featureIconInner}>
+                      <FontAwesomeIcon icon={faShieldAlt} />
                     </div>
                   </div>
-                  
-                  <div className={styles.reviewsList}>
-                    {product.reviews && product.reviews.map(review => (
-                      <div key={review.id} className={styles.reviewItem}>
-                        <div className={styles.reviewHeader}>
-                          <div className={styles.reviewAvatar}>
-                            {review.avatar ? (
-                              <Image src={review.avatar} alt={review.author} width={50} height={50} />
-                            ) : (
-                              <div className={styles.avatarPlaceholder}>{review.author.charAt(0)}</div>
-                            )}
-                          </div>
-                          <div className={styles.reviewMeta}>
-                            <div className={styles.reviewAuthor}>{review.author}</div>
-                            <div className={styles.reviewDate}>{review.date}</div>
-                          </div>
-                          <div className={styles.reviewRating}>
-                            {renderRating(review.rating)}
-                          </div>
-                        </div>
-                        <p className={styles.reviewContent}>{review.content}</p>
-                      </div>
-                    ))}
+                  <div className={styles.featureText}>
+                    <h4>Garantie Qualité</h4>
+                    <p>Tous nos produits sont testés en laboratoire</p>
                   </div>
                 </div>
-              )}
-            </div>
-          </div>
-          
-          {/* Related Products */}
-          {product.relatedProducts && product.relatedProducts.length > 0 && (
-            <section className={styles.relatedProducts}>
-              <div className={styles.container}>
-                <h2>Produits similaires</h2>
-                <div className={styles.relatedProductsGrid}>
-                  {product.relatedProducts.map(relatedId => {
-                    try {
-                      const relatedProduct = getDetailedProduct(relatedId.toString());
-                      return (
-                        <div key={relatedId} className={styles.productCard}>
-                          <Link href={`/products/${relatedProduct.id}`} className={styles.productLink}>
-                            {relatedProduct.tag && (
-                              <div className={`${styles.productBadge} ${
-                                relatedProduct.tag === "Nouveau" ? styles.new :
-                                relatedProduct.tag === "Bestseller" || relatedProduct.tag === "Populaire" ? styles.bestseller :
-                                relatedProduct.tag === "Premium" || relatedProduct.tag === "Exclusif" ? styles.premium :
-                                relatedProduct.tag === "Promo" || relatedProduct.tag.includes('%') ? styles.sale : ''
-                              }`}>
-                                {relatedProduct.tag}
-                              </div>
-                            )}
-                            
-                            <div className={styles.productImage}>
-                              <Image 
-                                src={relatedProduct.image}
-                                alt={relatedProduct.name}
-                                width={300}
-                                height={300}
-                                style={{ objectFit: 'cover' }}
-                              />
-                            </div>
-                            
-                            <div className={styles.productInfo}>
-                              <h3>{relatedProduct.name}</h3>
-                              <div className={styles.productRating}>
-                                {renderRating(relatedProduct.rating)}
-                                <span>(4.0)</span>
-                              </div>
-                              <p className={styles.productDescription}>{relatedProduct.description}</p>
-                              <div className={styles.productFooter}>
-                                <span className={styles.price}>
-                                  {relatedProduct.price.toFixed(2)}€
-                                </span>
-                                <button className={styles.btnOutline} onClick={(e) => e.preventDefault()}>
-                                  <FontAwesomeIcon icon={faShoppingCart} />
-                                </button>
-                              </div>
-                            </div>
-                          </Link>
-                        </div>
-                      );
-                    } catch {
-                      // Ignorer les produits associés qui n'existent pas
-                      return null;
-                    }
-                  })}
+                <div className={styles.feature}>
+                  <div className={styles.featureIcon}>
+                    <div className={styles.featureIconInner}>
+                      <FontAwesomeIcon icon={faTruck} />
+                    </div>
+                  </div>
+                  <div className={styles.featureText}>
+                    <h4>Livraison Gratuite</h4>
+                    <p>Pour toute commande supérieure à 50€</p>
+                  </div>
+                </div>
+                <div className={styles.feature}>
+                  <div className={styles.featureIcon}>
+                    <div className={styles.featureIconInner}>
+                      <FontAwesomeIcon icon={faLeaf} />
+                    </div>
+                  </div>
+                  <div className={styles.featureText}>
+                    <h4>100% Bio</h4>
+                    <p>Cultivé sans pesticides ni herbicides</p>
+                  </div>
                 </div>
               </div>
-            </section>
-          )}
+              
+              <div className={styles.productSocial}>
+                <span>Partager:</span>
+                <div className={styles.socialLinks}>
+                  <a href="#" aria-label="Partager sur Facebook">
+                    <FontAwesomeIcon icon={faFacebookF} />
+                  </a>
+                  <a href="#" aria-label="Partager sur Twitter">
+                    <FontAwesomeIcon icon={faTwitter} />
+                  </a>
+                  <a href="#" aria-label="Partager sur Pinterest">
+                    <FontAwesomeIcon icon={faPinterestP} />
+                  </a>
+                  <a href="#" aria-label="Partager sur Instagram">
+                    <FontAwesomeIcon icon={faInstagram} />
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
+
+      {/* Product Tabs Section */}
+      <section className={styles.productTabs}>
+        <div className={styles.container}>
+          <div className={styles.tabs}>
+            <button 
+              className={`${styles.tabButton} ${activeTab === 'description' ? styles.active : ''}`}
+              onClick={() => setActiveTab('description')}
+            >
+              Description
+            </button>
+            <button 
+              className={`${styles.tabButton} ${activeTab === 'details' ? styles.active : ''}`}
+              onClick={() => setActiveTab('details')}
+            >
+              Caractéristiques
+            </button>
+            <button 
+              className={`${styles.tabButton} ${activeTab === 'shipping' ? styles.active : ''}`}
+              onClick={() => setActiveTab('shipping')}
+            >
+              Livraison & Retours
+            </button>
+          </div>
+          
+          <div className={styles.tabContent}>
+            {activeTab === 'description' && (
+              <div className={styles.description}>
+                <h3>Description du produit</h3>
+                <p>{product.description}</p>
+                <p>Ce produit provient de {product.origin} et possède un taux de CBD de {product.cbd_percentage}%. Il est cultivé en {product.culture_type === 'indoor' ? 'intérieur (indoor)' : 'extérieur (outdoor)'} dans des conditions optimales.</p>
+                {categoryDetails && categoryDetails.description && (
+                  <div className={styles.categoryDescription}>
+                    <h4>À propos de cette catégorie: {categoryDetails.name}</h4>
+                    <p>{categoryDetails.description}</p>
+                  </div>
+                )}
+                <p>Tous nos produits sont conformes à la législation française et européenne avec un taux de THC inférieur à 0,3%.</p>
+              </div>
+            )}
+            
+            {activeTab === 'details' && (
+              <div className={styles.details}>
+                <h3>Caractéristiques</h3>
+                <table className={styles.detailsTable}>
+                  <tbody>
+                    <tr>
+                      <th>Poids disponibles</th>
+                      <td>{product.weightOptions.map(o => o.weight).join(', ')}</td>
+                    </tr>
+                    <tr>
+                      <th>Taux de CBD</th>
+                      <td>{product.cbd_percentage}%</td>
+                    </tr>
+                    <tr>
+                      <th>Taux de THC</th>
+                      <td>&lt; 0,3%</td>
+                    </tr>
+                    <tr>
+                      <th>Origine</th>
+                      <td>{product.origin}</td>
+                    </tr>
+                    <tr>
+                      <th>Type de culture</th>
+                      <td>{product.culture_type === 'indoor' ? 'Indoor' : 'Outdoor'}</td>
+                    </tr>
+                    {categoryDetails && (
+                      <tr>
+                        <th>Catégorie</th>
+                        <td>{categoryDetails.name}</td>
+                      </tr>
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            )}
+            
+            {activeTab === 'shipping' && (
+              <div className={styles.shipping}>
+                <h3>Livraison & Retours</h3>
+                <h4>Livraison</h4>
+                <p>Nous proposons plusieurs options de livraison :</p>
+                <ul>
+                  <li>Livraison standard (3-5 jours ouvrables) : 4,99€</li>
+                  <li>Livraison express (1-2 jours ouvrables) : 9,99€</li>
+                  <li>Livraison gratuite pour toute commande supérieure à 50€</li>
+                </ul>
+                
+                <h4>Politique de retour</h4>
+                <p>Nous acceptons les retours dans les 14 jours suivant la réception de votre commande. Pour être éligible à un retour, votre article doit être inutilisé et dans le même état que celui où vous l'avez reçu, et doit également être dans l'emballage d'origine.</p>
+              </div>
+            )}
+          </div>
+        </div>
+      </section>
+
+      {/* Success notification */}
+      {showNotification && (
+        <div className={styles.notification} style={{
+          position: 'fixed',
+          top: '20px',
+          right: '20px',
+          backgroundColor: '#4CAF50',
+          color: 'white',
+          padding: '15px 20px',
+          borderRadius: '5px',
+          boxShadow: '0 2px 10px rgba(0,0,0,0.2)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '10px',
+          zIndex: 9999,
+          animation: 'slideIn 0.3s ease'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <FontAwesomeIcon icon={faCheck} />
+            <span>Produit ajouté au panier avec succès!</span>
+          </div>
+          <Link href="/cart" style={{
+            marginLeft: '15px',
+            backgroundColor: 'white',
+            color: '#4CAF50',
+            padding: '5px 10px',
+            borderRadius: '3px',
+            fontSize: '0.9rem',
+            fontWeight: 'bold',
+            textDecoration: 'none'
+          }}>
+            Voir le panier
+          </Link>
+        </div>
+      )}
     </>
   );
-} 
+}
+
+// Add this CSS to styles.module.css to handle animation
+// @keyframes slideIn {
+//   from { transform: translateX(100%); opacity: 0; }
+//   to { transform: translateX(0); opacity: 1; }
+// } 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import styles from '../styles.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -14,42 +14,13 @@ import {
 import { faStar as farStar } from '@fortawesome/free-regular-svg-icons';
 import Image from 'next/image';
 import Link from 'next/link';
-import { products as allProducts } from '../data/products';
-
-// Catégories pour la sidebar
-const categories = [
-  { id: 'all', name: 'Tous les produits', count: allProducts.length },
-  { id: 'fleurs', name: 'Fleurs CBD', count: allProducts.filter(p => p.category === 'fleurs').length },
-  { id: 'huiles', name: 'Huiles CBD', count: allProducts.filter(p => p.category === 'huiles').length },
-  { id: 'resines', name: 'Résines CBD', count: allProducts.filter(p => p.category === 'resines').length },
-  { id: 'comestibles', name: 'Comestibles', count: allProducts.filter(p => p.category === 'comestibles').length },
-  { id: 'nouveautes', name: 'Nouveautés', count: allProducts.filter(p => p.category === 'nouveautes').length }
-];
-
-// Produits populaires pour la sidebar
-const popularProducts = [
-  {
-    id: '1',
-    name: 'Gorilla Glue CBD',
-    price: 39.99,
-    image: '/images/gorilla-glue-small-buds-ivory.webp'
-  },
-  {
-    id: '8',
-    name: 'Huile CBD Premium 15%',
-    price: 49.99,
-    image: '/images/huile/huile-de-cbd-5-avec-thc-full-spectrum-chanvroo-france.webp'
-  },
-  {
-    id: '15',
-    name: 'Hash CBD King Hassan',
-    price: 24.99,
-    image: '/images/resines/hash-cbd-king-hassan-easyweed.webp'
-  }
-];
+import { getAllProducts, getProductsByCategory, getAllCategories } from '@/services/product.service';
+import { Product, Category } from '@/types/database.types';
+import ProductCard from '../components/ProductCard';
+import AddToCartNotification from '../components/AddToCartNotification';
 
 // Fonction pour afficher les étoiles de notation
-const renderRating = (rating: number) => {
+const renderRating = (rating: number = 5) => {
   const stars = [];
   const fullStars = Math.floor(rating);
   const hasHalfStar = rating % 1 !== 0;
@@ -71,33 +42,115 @@ const renderRating = (rating: number) => {
 };
 
 export default function ProductsPage() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
   const [filterVisible, setFilterVisible] = useState(false);
   const [sortOrder, setSortOrder] = useState('default');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
-
-  // Filtrer les produits par catégorie
-  const filteredProducts = activeCategory === 'all' 
-    ? allProducts 
-    : allProducts.filter(product => product.category === activeCategory);
+  const [categories, setCategories] = useState<(Category & { count: number })[]>([]);
+  const [popularProducts, setPopularProducts] = useState<Product[]>([]);
+  const [showNotification, setShowNotification] = useState(false);
+  
+  // Fetch categories and products from Supabase
+  useEffect(() => {
+    const fetchCategoriesAndProducts = async () => {
+      setLoading(true);
+      try {
+        // Fetch categories
+        const categoriesData = await getAllCategories();
+        
+        // Fetch all products
+        const allProductsData = await getAllProducts();
+        setProducts(allProductsData);
+        
+        // Count products per category
+        const categoriesWithCount = categoriesData.map(category => {
+          const count = allProductsData.filter(p => 
+            p.category_id === category.id || 
+            (p.category === category.slug && !p.category_id)
+          ).length;
+          
+          return { ...category, count };
+        });
+        
+        // Add "All Products" option
+        const allCategoriesOption = {
+          id: 'all',
+          name: 'Tous les produits',
+          slug: 'all',
+          description: 'Tous nos produits CBD',
+          image_url: null,
+          count: allProductsData.length,
+          order: 0 // Toujours en première position
+        };
+        
+        setCategories([allCategoriesOption, ...categoriesWithCount]);
+        
+        // Set popular products (those with Bestseller or Populaire tag)
+        const popularProds = allProductsData
+          .filter(p => p.tag === 'Bestseller' || p.tag === 'Populaire')
+          .slice(0, 3);
+        
+        // If not enough products with bestseller tags, just use the first few
+        if (popularProds.length < 3) {
+          setPopularProducts([...popularProds, ...allProductsData.slice(0, 3 - popularProds.length)]);
+        } else {
+          setPopularProducts(popularProds);
+        }
+      } catch (error) {
+        console.error("Failed to fetch categories and products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCategoriesAndProducts();
+  }, []);
+  
+  // Fetch products by category when activeCategory changes
+  useEffect(() => {
+    const fetchProductsByCategory = async () => {
+      setLoading(true);
+      try {
+        const categoryProducts = await getProductsByCategory(activeCategory);
+        setProducts(categoryProducts);
+      } catch (error) {
+        console.error(`Failed to fetch products by category ${activeCategory}:`, error);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    if (activeCategory) {
+      fetchProductsByCategory();
+    }
+  }, [activeCategory]);
 
   // Trier les produits selon l'ordre sélectionné
   const sortProducts = () => {
-    const sortedProducts = [...filteredProducts];
+    if (!products.length) return [];
+    
+    const sortedProducts = [...products];
     
     switch (sortOrder) {
       case 'price-low':
-        sortedProducts.sort((a, b) => a.price - b.price);
+        sortedProducts.sort((a, b) => a.price_3g - b.price_3g);
         break;
       case 'price-high':
-        sortedProducts.sort((a, b) => b.price - a.price);
+        sortedProducts.sort((a, b) => b.price_3g - a.price_3g);
         break;
       case 'newest':
-        // Pour cet exemple, nous trions par id de manière inverse
-        sortedProducts.sort((a, b) => b.id.localeCompare(a.id));
+        // Sort by created_at if available, otherwise by id
+        sortedProducts.sort((a, b) => {
+          if (a.created_at && b.created_at) {
+            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          }
+          return b.id.localeCompare(a.id);
+        });
         break;
       case 'popularity':
-        // Pour cet exemple, nous trions par les produits taggés comme populaires, bestsellers ou premium en premier
+        // Sort by tag if available
         sortedProducts.sort((a, b) => {
           const aPopular = a.tag === 'Bestseller' || a.tag === 'Populaire' || a.tag === 'Premium';
           const bPopular = b.tag === 'Bestseller' || b.tag === 'Populaire' || b.tag === 'Premium';
@@ -109,10 +162,24 @@ export default function ProductsPage() {
         break;
     }
     
-    return sortedProducts.filter(product => product.price >= priceRange[0] && product.price <= priceRange[1]);
+    return sortedProducts.filter(product => product.price_3g >= priceRange[0] && product.price_3g <= priceRange[1]);
   };
 
   const sortedProducts = sortProducts();
+  
+  const handleAddToCart = () => {
+    setShowNotification(true);
+  };
+
+  // Display loading state while fetching products
+  if (loading) {
+    return (
+      <div className={styles.loadingContainer}>
+        <div className={styles.spinner}></div>
+        <p>Chargement des produits...</p>
+      </div>
+    );
+  }
 
   return (
     <>
@@ -145,12 +212,11 @@ export default function ProductsPage() {
                   value={activeCategory}
                   onChange={(e) => setActiveCategory(e.target.value)}
                 >
-                  <option value="all">Toutes les catégories</option>
-                  <option value="fleurs">Fleurs CBD</option>
-                  <option value="huiles">Huiles CBD</option>
-                  <option value="resines">Résines CBD</option>
-                  <option value="comestibles">Comestibles</option>
-                  <option value="nouveautes">Nouveautés</option>
+                  {categories.map(category => (
+                    <option key={category.id} value={category.slug}>
+                      {category.name}
+                    </option>
+                  ))}
                 </select>
               </div>
               
@@ -191,151 +257,94 @@ export default function ProductsPage() {
         </div>
       </section>
 
+      {/* Mobile Categories Slider - Only visible on mobile */}
+      <div className={styles.mobileCategoriesSlider}>
+        <div className={styles.categoriesScrollContainer}>
+          {categories.map(category => (
+            <button 
+              key={category.id}
+              className={`${styles.categoryPill} ${activeCategory === category.slug ? styles.active : ''}`}
+              onClick={() => setActiveCategory(category.slug)}
+            >
+              {category.name} <span className={styles.categoryCount}>({category.count})</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Main Products Section */}
-      <section className={styles.productsMain}>
+      <section className={`${styles.productsPage} ${styles.productsMain}`}>
         <div className={styles.container}>
           <div className={styles.productsGridContainer}>
             {/* Sidebar */}
             <aside className={styles.sidebar}>
               <div className={styles.sidebarWidget}>
-                <h3>Catégories</h3>
+                <h3 className={styles.widgetTitle}>Catégories</h3>
                 <ul className={styles.categoryList}>
                   {categories.map(category => (
                     <li key={category.id}>
-                      <a 
-                        href="#" 
-                        className={activeCategory === category.id ? styles.active : ''}
-                        onClick={(e) => {
-                          e.preventDefault();
-                          setActiveCategory(category.id);
-                        }}
+                      <button 
+                        className={`${styles.categoryButton} ${activeCategory === category.slug ? styles.active : ''}`}
+                        onClick={() => setActiveCategory(category.slug)}
                       >
-                        {category.name} <span>{category.count}</span>
-                      </a>
+                        {category.name} <span className={styles.categoryCount}>({category.count})</span>
+                      </button>
                     </li>
                   ))}
                 </ul>
               </div>
               
               <div className={styles.sidebarWidget}>
-                <h3>Filtrer par CBD</h3>
-                <div className={styles.checkboxFilters}>
-                  <label className={styles.filterCheckbox}>
-                    <input type="checkbox" name="cbd-type" value="full-spectrum" />
-                    Full Spectrum
-                  </label>
-                  <label className={styles.filterCheckbox}>
-                    <input type="checkbox" name="cbd-type" value="broad-spectrum" />
-                    Broad Spectrum
-                  </label>
-                  <label className={styles.filterCheckbox}>
-                    <input type="checkbox" name="cbd-type" value="isolate" />
-                    Isolat CBD
-                  </label>
-                </div>
-              </div>
-              
-              <div className={styles.sidebarWidget}>
-                <h3>Pourcentage de CBD</h3>
-                <div className={styles.checkboxFilters}>
-                  <label className={styles.filterCheckbox}>
-                    <input type="checkbox" name="cbd-percentage" value="5" />
-                    5% CBD
-                  </label>
-                  <label className={styles.filterCheckbox}>
-                    <input type="checkbox" name="cbd-percentage" value="10" />
-                    10% CBD
-                  </label>
-                  <label className={styles.filterCheckbox}>
-                    <input type="checkbox" name="cbd-percentage" value="15" />
-                    15% CBD
-                  </label>
-                  <label className={styles.filterCheckbox}>
-                    <input type="checkbox" name="cbd-percentage" value="20" />
-                    20% CBD
-                  </label>
-                  <label className={styles.filterCheckbox}>
-                    <input type="checkbox" name="cbd-percentage" value="25" />
-                    25% CBD+
-                  </label>
-                </div>
-              </div>
-              
-              <div className={styles.sidebarWidget}>
-                <h3>Meilleures ventes</h3>
-                <div className={styles.popularProducts}>
+                <h3 className={styles.widgetTitle}>Produits Populaires</h3>
+                <div className={styles.popularProductsList}>
                   {popularProducts.map(product => (
-                    <div key={product.id} className={styles.popularProduct}>
-                      <Image 
-                        src={product.image} 
-                        alt={product.name}
-                        width={60}
-                        height={60}
-                      />
-                      <div className={styles.popularProductInfo}>
-                        <h4>{product.name}</h4>
-                        <span className={styles.price}>{product.price.toFixed(2)}€</span>
+                    <Link key={product.id} href={`/products/${product.id}`} style={{ textDecoration: 'none' }}>
+                      <div className={styles.popularProduct}>
+                        <div className={styles.popularProductImage}>
+                          <Image 
+                            src={product.image_url || '/images/placeholder-product.jpg'} 
+                            alt={product.name}
+                            width={80}
+                            height={80}
+                            style={{ objectFit: 'cover' }}
+                          />
+                        </div>
+                        <div className={styles.popularProductInfo}>
+                          <h4>{product.name}</h4>
+                          <span className={styles.popularProductPrice}>{product.price_3g.toFixed(2)}€</span>
+                        </div>
                       </div>
-                    </div>
+                    </Link>
                   ))}
                 </div>
               </div>
             </aside>
-
+            
             {/* Products Grid */}
             <div className={styles.productsGrid}>
-              {sortedProducts.map(product => (
-                <div key={product.id} className={styles.productCard}>
-                  <Link href={`/products/${product.id}`} className={styles.productLink}>
-                    {product.tag && (
-                      <div className={`${styles.productBadge} ${
-                        product.tag === "Nouveau" ? styles.new :
-                        product.tag === "Bestseller" || product.tag === "Populaire" ? styles.bestseller :
-                        product.tag === "Premium" || product.tag === "Exclusif" ? styles.premium :
-                        product.tag === "Promo" || product.tag.includes('%') ? styles.sale : ''
-                      }`}>
-                        {product.tag}
-                      </div>
-                    )}
-                    
-                    <div className={styles.productImage}>
-                      <Image 
-                        src={product.image}
-                        alt={product.name}
-                        width={300}
-                        height={300}
-                        style={{ objectFit: 'cover' }}
-                      />
-                    </div>
-                    
-                    <div className={styles.productInfo}>
-                      <h3>{product.name}</h3>
-                      <div className={styles.productRating}>
-                        {renderRating(4.0)} {/* Default rating */}
-                        <span>(4.0)</span>
-                      </div>
-                      <p className={styles.productDescription}>{product.description}</p>
-                      <div className={styles.productFooter}>
-                        <span className={styles.price}>
-                          {product.price.toFixed(2)}€
-                        </span>
-                        <button className={styles.btnOutline} onClick={(e) => e.stopPropagation()}>
-                          <FontAwesomeIcon icon={faShoppingCart} className={styles.btnIcon} />
-                        </button>
-                      </div>
-                    </div>
-                  </Link>
-                </div>
-              ))}
-              
-              {sortedProducts.length === 0 && (
-                <div className={styles.noResults}>
-                  <p>Aucun produit ne correspond à votre recherche.</p>
+              {sortedProducts.length > 0 ? (
+                sortedProducts.map(product => (
+                  <div key={product.id} className={styles.productGridItem}>
+                    <ProductCard
+                      id={product.id}
+                      name={product.name}
+                      description={product.description}
+                      price={product.price_3g}
+                      image={product.image_url || '/images/placeholder-product.jpg'}
+                      tag={product.tag}
+                      onAddToCart={handleAddToCart}
+                    />
+                  </div>
+                ))
+              ) : (
+                <div className={styles.noProducts}>
+                  <p>Aucun produit ne correspond à vos critères.</p>
                   <button 
-                    className={styles.btnPrimary}
+                    className={styles.btnOutline}
                     onClick={() => {
                       setActiveCategory('all');
                       setPriceRange([0, 100]);
+                      setSortOrder('default');
                     }}
                   >
                     Réinitialiser les filtres
@@ -344,41 +353,14 @@ export default function ProductsPage() {
               )}
             </div>
           </div>
-          
-          {/* Pagination */}
-          <div className={styles.pagination}>
-            <button className={styles.pageNav} disabled>
-              <FontAwesomeIcon icon={faChevronLeft} />
-            </button>
-            <div className={styles.pageNumbers}>
-              <a href="#" className={styles.active}>1</a>
-              <a href="#">2</a>
-              <a href="#">3</a>
-              <span>...</span>
-              <a href="#">6</a>
-            </div>
-            <button className={styles.pageNav}>
-              <FontAwesomeIcon icon={faChevronRight} />
-            </button>
-          </div>
         </div>
       </section>
-
-      {/* Newsletter Section */}
-      <section className={styles.newsletter}>
-        <div className={styles.container}>
-          <div className={styles.newsletterContent}>
-            <div className={styles.newsletterText}>
-              <h2>Restez informé</h2>
-              <p>Inscrivez-vous à notre newsletter pour recevoir nos dernières actualités, promotions et conseils sur le CBD.</p>
-            </div>
-            <form className={styles.newsletterForm}>
-              <input type="email" placeholder="Votre email" />
-              <button type="submit" className={styles.btnPrimary}>S&apos;inscrire</button>
-            </form>
-          </div>
-        </div>
-      </section>
+      {showNotification && (
+        <AddToCartNotification
+          show={showNotification}
+          onClose={() => setShowNotification(false)}
+        />
+      )}
     </>
   );
 }

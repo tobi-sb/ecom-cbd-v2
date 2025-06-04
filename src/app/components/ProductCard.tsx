@@ -1,9 +1,12 @@
 'use client';
 
 import Image from 'next/image';
+import Link from 'next/link';
 import styles from '../styles.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faCartPlus, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { useCart } from '@/contexts/CartContext';
+import { useState } from 'react';
 
 interface ProductCardProps {
   id: string;
@@ -12,7 +15,13 @@ interface ProductCardProps {
   price: number;
   image: string;
   tag?: string;
-  onAddToCart?: (id: string) => void;
+  onAddToCart?: () => void;
+  customStyles?: {
+    productCard?: React.CSSProperties;
+    productPrice?: React.CSSProperties;
+    price?: React.CSSProperties;
+    addToCartBtn?: React.CSSProperties;
+  };
 }
 
 const ProductCard = ({ 
@@ -22,12 +31,33 @@ const ProductCard = ({
   price, 
   image, 
   tag,
-  onAddToCart 
+  onAddToCart,
+  customStyles = {}
 }: ProductCardProps) => {
-  const handleAddToCart = () => {
-    if (onAddToCart) {
-      onAddToCart(id);
-    }
+  const { addToCart } = useCart();
+  const [adding, setAdding] = useState(false);
+
+  const handleAddToCart = (e: React.MouseEvent) => {
+    // Stop propagation to prevent navigation when clicking the cart button
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setAdding(true);
+    
+    // Add the product to the cart
+    addToCart({
+      id,
+      name,
+      price,
+      image,
+      description
+    });
+    
+    // Show feedback for a short time
+    setTimeout(() => {
+      setAdding(false);
+      onAddToCart?.();
+    }, 500);
   };
 
   // Create a truncated description if it's too long
@@ -36,58 +66,39 @@ const ProductCard = ({
     : description;
 
   return (
-    <div className={styles.productCard} style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
-      <div className={styles.productImage} style={{ height: '220px', flexShrink: 0 }}>
-        <Image 
-          src={image} 
-          alt={name}
-          width={300}
-          height={250}
-          style={{ objectFit: 'cover', width: '100%', height: '100%' }}
-        />
-        {tag && <div className={styles.productTag}>{tag}</div>}
-      </div>
-      <div className={styles.productInfo} style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        flex: '1', 
-        padding: '12px 15px' 
-      }}>
-        <h3 style={{ 
-          height: '42px', 
-          overflow: 'hidden', 
-          display: '-webkit-box', 
-          WebkitLineClamp: 2, 
-          WebkitBoxOrient: 'vertical',
-          margin: '0 0 5px 0',
-          fontSize: '16px',
-          lineHeight: '1.3'
-        }}>
-          {name}
-        </h3>
-        <p className={styles.productDescription} style={{ 
-          height: '48px', 
-          overflow: 'hidden', 
-          display: '-webkit-box', 
-          WebkitLineClamp: 2, 
-          WebkitBoxOrient: 'vertical',
-          margin: '0 0 10px 0',
-          fontSize: '14px',
-          lineHeight: '1.4'
-        }}>
-          {truncatedDescription}
-        </p>
-        <div className={styles.productPrice} style={{ marginTop: 'auto' }}>
-          <span className={styles.price}>{price.toFixed(2)}€</span>
-          <a href="#" className={styles.addToCart} onClick={(e) => {
-            e.preventDefault();
-            handleAddToCart();
-          }}>
-            <FontAwesomeIcon icon={faPlus} />
-          </a>
+    <>
+      <Link href={`/products/${id}`} className={styles.productCardLink}>
+        <div className={styles.productCard} style={customStyles.productCard}>
+          <div className={styles.productImage}>
+            <Image 
+              src={image} 
+              alt={name}
+              width={300}
+              height={150}
+              style={{ objectFit: 'cover', width: '100%', height: '100%' }}
+            />
+            {tag && <div className={styles.productTag}>{tag}</div>}
+          </div>
+          <div className={styles.productInfo}>
+            <h3>{name}</h3>
+            <p className={styles.productDescription}>{truncatedDescription}</p>
+            <div className={styles.productPrice} style={customStyles.productPrice}>
+              <span className={styles.price} style={customStyles.price}>{price.toFixed(2)}€</span>
+              <button 
+                className={`${styles.addToCartBtn} ${adding ? styles.adding : ''}`} 
+                onClick={handleAddToCart}
+                aria-label="Ajouter au panier"
+                disabled={adding}
+                style={customStyles.addToCartBtn}
+              >
+                <FontAwesomeIcon icon={faCartPlus} />
+                <span>Ajouter</span>
+              </button>
+            </div>
+          </div>
         </div>
-      </div>
-    </div>
+      </Link>
+    </>
   );
 };
 

@@ -8,16 +8,22 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faShoppingCart, 
   faBars, 
-  faXmark 
+  faXmark,
+  faUserShield,
+  faUser,
+  faSignInAlt
 } from '@fortawesome/free-solid-svg-icons';
+import { useAuth } from '@/contexts/AuthContext';
+import { useCart } from '@/contexts/CartContext';
 
 const Header = () => {
   const pathname = usePathname();
-  const [cartCount] = useState(0);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const headerRef = useRef<HTMLElement>(null);
+  const { isAuthenticated, isAdmin } = useAuth();
+  const { getItemsCount } = useCart();
 
   // Vérifier si l'écran est de taille mobile
   useEffect(() => {
@@ -96,6 +102,8 @@ const Header = () => {
     setMobileMenuOpen(!mobileMenuOpen);
   };
 
+  const cartCount = getItemsCount();
+
   return (
     <header 
       ref={headerRef}
@@ -123,7 +131,7 @@ const Header = () => {
             </Link>
           </li>
           <li>
-            <Link href="/about" className={pathname === '/about' ? styles.active : ''}>
+            <Link href="/a-propos" className={pathname === '/a-propos' ? styles.active : ''}>
               À propos
             </Link>
           </li>
@@ -142,6 +150,24 @@ const Header = () => {
             <span className={styles.cartCount}>{cartCount}</span>
           </Link>
         </div>
+        
+        {/* Authentication Links */}
+        {isAuthenticated ? (
+          <Link href="/profile" className={styles.userLink} title="Mon Profil" style={{ color: 'white' }}>
+            <FontAwesomeIcon icon={faUser} />
+          </Link>
+        ) : (
+          <Link href="/login" className={styles.authLink} title="Se connecter" style={{ color: 'white' }}>
+            <FontAwesomeIcon icon={faSignInAlt} />
+          </Link>
+        )}
+        
+        {/* Admin Link - Only show if user is admin */}
+        {isAuthenticated && isAdmin && (
+          <Link href="/admin" className={styles.adminLink} title="Administration">
+            <FontAwesomeIcon icon={faUserShield} />
+          </Link>
+        )}
         
         {/* Hamburger menu pour mobile (affiché uniquement sur mobile) */}
         {isMobile && (
@@ -191,8 +217,8 @@ const Header = () => {
               </li>
               <li>
                 <Link 
-                  href="/about" 
-                  className={pathname === '/about' ? styles.active : ''}
+                  href="/a-propos" 
+                  className={pathname === '/a-propos' ? styles.active : ''}
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   À propos
@@ -207,6 +233,58 @@ const Header = () => {
                   Contact
                 </Link>
               </li>
+              <li>
+                <Link 
+                  href="/cart" 
+                  className={pathname === '/cart' ? styles.active : ''}
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  <FontAwesomeIcon icon={faShoppingCart} style={{ marginRight: '10px' }} />
+                  Panier ({cartCount})
+                </Link>
+              </li>
+              
+              {/* Authentication Links for Mobile */}
+              {isAuthenticated ? (
+                <>
+                  <li>
+                    <Link 
+                      href="/profile" 
+                      className={pathname === '/profile' ? styles.active : ''}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <FontAwesomeIcon icon={faUser} style={{ marginRight: '10px' }} />
+                      Mon Profil
+                    </Link>
+                  </li>
+                  {/* Admin Link - Only show if user is admin */}
+                  {isAdmin && (
+                    <li>
+                      <Link 
+                        href="/admin" 
+                        className={pathname.startsWith('/admin') ? styles.active : ''}
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        <FontAwesomeIcon icon={faUserShield} style={{ marginRight: '10px' }} />
+                        Admin
+                      </Link>
+                    </li>
+                  )}
+                </>
+              ) : (
+                <>
+                  <li>
+                    <Link 
+                      href="/login" 
+                      className={pathname === '/login' ? styles.active : ''}
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <FontAwesomeIcon icon={faSignInAlt} style={{ marginRight: '10px', color: 'white' }} />
+                      Se connecter
+                    </Link>
+                  </li>
+                </>
+              )}
             </ul>
           </nav>
         </div>

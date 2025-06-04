@@ -11,7 +11,7 @@ const AboutBanner = () => {
           Notre mission est de vous offrir des produits d&apos;exception, récoltés au cœur de la jungle, 
           pour vous aider à retrouver votre équilibre naturel.
         </p>
-        <Link href="/about" className={styles.btnOutline}>
+        <Link href="/a-propos" className={styles.btnOutline}>
           En savoir plus
         </Link>
       </div>

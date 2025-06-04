@@ -1,0 +1,289 @@
+.aboutContainer {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+.aboutHeader {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.aboutHeader h1 {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  color: #2e7d32;
+}
+
+.aboutHeader p {
+  font-size: 1.1rem;
+  color: #555;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.aboutSection {
+  margin-bottom: 5rem;
+  padding: 3rem 0;
+}
+
+.altSection {
+  background-color: #f8f9fa;
+  margin-left: -1rem;
+  margin-right: -1rem;
+  padding-left: 1rem;
+  padding-right: 1rem;
+}
+
+.aboutContent {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+@media (min-width: 768px) {
+  .aboutContent {
+    flex-direction: row;
+    align-items: center;
+  }
+  
+  .aboutText {
+    width: 60%;
+  }
+  
+  .aboutImageContainer {
+    width: 40%;
+  }
+  
+  .altSection .aboutContent {
+    flex-direction: row-reverse;
+  }
+}
+
+.aboutText h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #2e7d32;
+  position: relative;
+  padding-bottom: 15px;
+}
+
+.aboutText h2::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 60px;
+  height: 3px;
+  background-color: #8bc34a;
+}
+
+.aboutText p {
+  font-size: 1.1rem;
+  line-height: 1.7;
+  color: #333;
+  margin-bottom: 1.5rem;
+}
+
+.aboutImageContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.aboutImagePlaceholder {
+  background-color: #e9f4e9;
+  width: 100%;
+  max-width: 500px;
+  aspect-ratio: 4/3;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #2e7d32;
+  border-radius: 8px;
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.1);
+}
+
+.valuesContainer {
+  text-align: center;
+}
+
+.valuesContainer h2 {
+  font-size: 2rem;
+  margin-bottom: 2.5rem;
+  color: #2e7d32;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 15px;
+}
+
+.valuesContainer h2::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 60px;
+  height: 3px;
+  background-color: #8bc34a;
+}
+
+.valuesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+.valueCard {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.valueCard:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 12px 16px rgba(0, 0, 0, 0.1);
+}
+
+.valueCard h3 {
+  font-size: 1.5rem;
+  margin-bottom: 1rem;
+  color: #2e7d32;
+}
+
+.valueCard p {
+  color: #555;
+  line-height: 1.6;
+}
+
+.teamContainer {
+  text-align: center;
+}
+
+.teamContainer h2 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+  color: #2e7d32;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 15px;
+}
+
+.teamContainer h2::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 60px;
+  height: 3px;
+  background-color: #8bc34a;
+}
+
+.teamIntro {
+  max-width: 800px;
+  margin: 0 auto 3rem;
+  font-size: 1.1rem;
+  color: #555;
+}
+
+.teamGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2.5rem;
+}
+
+.teamMember {
+  background-color: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.teamMember:hover {
+  transform: translateY(-10px);
+}
+
+.memberImagePlaceholder {
+  background-color: #e9f4e9;
+  width: 100%;
+  aspect-ratio: 1/1;
+}
+
+.teamMember h3 {
+  font-size: 1.3rem;
+  margin: 1.5rem 0 0.3rem;
+  color: #2e7d32;
+}
+
+.memberRole {
+  color: #8bc34a;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.teamMember p {
+  padding: 0 1.5rem 1.5rem;
+  color: #555;
+  line-height: 1.6;
+}
+
+.certificationsContainer {
+  text-align: center;
+}
+
+.certificationsContainer h2 {
+  font-size: 2rem;
+  margin-bottom: 2.5rem;
+  color: #2e7d32;
+  position: relative;
+  display: inline-block;
+  padding-bottom: 15px;
+}
+
+.certificationsContainer h2::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: 0;
+  width: 60px;
+  height: 3px;
+  background-color: #8bc34a;
+}
+
+.certificationsGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: 2rem;
+}
+
+.certificationCard {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 8px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.certificationImagePlaceholder {
+  background-color: #e9f4e9;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  margin: 0 auto 1.5rem;
+}
+
+.certificationCard h3 {
+  font-size: 1.3rem;
+  margin-bottom: 1rem;
+  color: #2e7d32;
+}
+
+.certificationCard p {
+  color: #555;
+  line-height: 1.6;
+} 
