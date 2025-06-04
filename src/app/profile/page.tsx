@@ -84,7 +84,7 @@ export default function ProfilePage() {
           <h2>Mes Commandes</h2>
           <div className={styles.ordersList}>
             <p className={styles.noOrders}>
-              Vous n'avez pas encore passé de commande.
+              Vous n&apos;avez pas encore passé de commande.
             </p>
             {/* Order history will be implemented here later */}
           </div>

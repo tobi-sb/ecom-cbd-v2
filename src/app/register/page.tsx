@@ -6,7 +6,7 @@ import Link from 'next/link';
 import { useAuth } from '@/contexts/AuthContext';
 import styles from '../styles.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faLock, faEnvelope, faUser, faSpinner } from '@fortawesome/free-solid-svg-icons';
+import { faLock, faEnvelope, faSpinner } from '@fortawesome/free-solid-svg-icons';
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -38,9 +38,13 @@ export default function RegisterPage() {
     try {
       await register(email, password);
       router.push('/'); // Redirect to homepage after successful registration
-    } catch (err: any) {
+    } catch (err: Error | unknown) {
       console.error('Registration error:', err);
-      setError(err.message || 'Une erreur est survenue lors de l\'inscription.');
+      if (err instanceof Error) {
+        setError(err.message || 'Une erreur est survenue lors de l&apos;inscription.');
+      } else {
+        setError('Une erreur est survenue lors de l&apos;inscription.');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -105,7 +109,7 @@ export default function RegisterPage() {
           <div className={styles.termsAgreement}>
             <p>
               En créant un compte, vous acceptez nos{' '}
-              <Link href="/terms">Conditions d'utilisation</Link> et notre{' '}
+              <Link href="/terms">Conditions d&apos;utilisation</Link> et notre{' '}
               <Link href="/privacy">Politique de confidentialité</Link>.
             </p>
           </div>

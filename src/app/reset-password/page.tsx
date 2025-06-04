@@ -10,7 +10,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faLock, faSpinner, faCheckCircle } from '@fortawesome/free-solid-svg-icons';
 
 export default function ResetPasswordPage() {
-  const router = useRouter();
+  // No need for router here since we're not navigating programmatically
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [error, setError] = useState('');
@@ -50,9 +50,13 @@ export default function ResetPasswordPage() {
     try {
       await updatePassword(password);
       setIsSuccess(true);
-    } catch (err: any) {
+    } catch (err: Error | unknown) {
       console.error('Password update error:', err);
-      setError(err.message || 'Une erreur est survenue lors de la réinitialisation du mot de passe.');
+      if (err instanceof Error) {
+        setError(err.message || 'Une erreur est survenue lors de la réinitialisation du mot de passe.');
+      } else {
+        setError('Une erreur est survenue lors de la réinitialisation du mot de passe.');
+      }
     } finally {
       setIsLoading(false);
     }

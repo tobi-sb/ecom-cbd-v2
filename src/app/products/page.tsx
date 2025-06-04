@@ -5,11 +5,8 @@ import styles from '../styles.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faFilter, 
-  faShoppingCart,
   faStar, 
-  faStarHalfAlt,
-  faChevronLeft,
-  faChevronRight
+  faStarHalfAlt
 } from '@fortawesome/free-solid-svg-icons';
 import { faStar as farStar } from '@fortawesome/free-regular-svg-icons';
 import Image from 'next/image';
@@ -18,28 +15,6 @@ import { getAllProducts, getProductsByCategory, getAllCategories } from '@/servi
 import { Product, Category } from '@/types/database.types';
 import ProductCard from '../components/ProductCard';
 import AddToCartNotification from '../components/AddToCartNotification';
-
-// Fonction pour afficher les étoiles de notation
-const renderRating = (rating: number = 5) => {
-  const stars = [];
-  const fullStars = Math.floor(rating);
-  const hasHalfStar = rating % 1 !== 0;
-  const emptyStars = 5 - fullStars - (hasHalfStar ? 1 : 0);
-
-  for (let i = 0; i < fullStars; i++) {
-    stars.push(<FontAwesomeIcon key={`full-${i}`} icon={faStar} />);
-  }
-  
-  if (hasHalfStar) {
-    stars.push(<FontAwesomeIcon key="half" icon={faStarHalfAlt} />);
-  }
-
-  for (let i = 0; i < emptyStars; i++) {
-    stars.push(<FontAwesomeIcon key={`empty-${i}`} icon={farStar} />);
-  }
-
-  return stars;
-};
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>([]);

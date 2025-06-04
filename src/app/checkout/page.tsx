@@ -142,9 +142,13 @@ function PaymentForm({
         });
         onSuccess(paymentIntent);
       }
-    } catch (error: any) {
+    } catch (error: Error | unknown) {
       console.error('Payment processing error:', error);
-      onError(error.message || 'An error occurred during payment processing');
+      if (error instanceof Error) {
+        onError(error.message || 'An error occurred during payment processing');
+      } else {
+        onError('An error occurred during payment processing');
+      }
     } finally {
       setIsProcessing(false);
     }
