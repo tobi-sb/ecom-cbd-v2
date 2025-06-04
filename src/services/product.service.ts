@@ -213,7 +213,7 @@ export const uploadProductImage = async (file: File, fileName: string): Promise<
   const uniqueFileName = `${Date.now()}_${fileName.replace(/\s+/g, '_')}`;
   const filePath = `products/${uniqueFileName}`;
   
-  const { data, error } = await supabase
+  const { error } = await supabase
     .storage
     .from('product-images')
     .upload(filePath, file, {
@@ -294,7 +294,7 @@ export const updateCategory = async (id: string, categoryData: Partial<Category>
  * Check if a category has associated products
  */
 export const categoryHasProducts = async (categoryId: string): Promise<boolean> => {
-  const { data, error, count } = await supabase
+  const { error, count } = await supabase
     .from('products')
     .select('id', { count: 'exact' })
     .eq('category_id', categoryId);
@@ -350,7 +350,7 @@ export const uploadCategoryImage = async (file: File, fileName: string): Promise
   const uniqueFileName = `${Date.now()}_${fileName.replace(/\s+/g, '_')}`;
   const filePath = `categories/${uniqueFileName}`;
   
-  const { data, error } = await supabase
+  const { error } = await supabase
     .storage
     .from('product-images') // Using the same bucket as products
     .upload(filePath, file, {
@@ -449,7 +449,7 @@ export const uploadColorVariantImage = async (file: File, fileName: string): Pro
   const uniqueFileName = `${Date.now()}_${fileName.replace(/\s+/g, '_')}`;
   const filePath = `color-variants/${uniqueFileName}`;
   
-  const { data, error } = await supabase
+  const { error } = await supabase
     .storage
     .from('product-images')
     .upload(filePath, file, {

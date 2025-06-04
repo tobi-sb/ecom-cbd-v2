@@ -53,7 +53,7 @@ export const getCurrentUser = async (): Promise<User | null> => {
 };
 
 // Update user profile
-export const updateUserProfile = async (profile: { [key: string]: any }) => {
+export const updateUserProfile = async (profile: { [key: string]: string | number | boolean | null }) => {
   const { data, error } = await supabase.auth.updateUser({
     data: profile
   });

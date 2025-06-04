@@ -1,6 +1,27 @@
 import { supabase } from '@/lib/supabase';
 import { Order } from '@/types/database.types';
 
+// Define interfaces for the address and item types
+interface Address {
+  street: string;
+  city: string;
+  state?: string;
+  country: string;
+  postalCode: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+}
+
+interface OrderItem {
+  product_id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  weight?: string;
+  variant_id?: string;
+}
+
 /**
  * Create a new order after successful payment
  */
@@ -9,9 +30,9 @@ export const createOrder = async (orderData: {
   stripe_customer_id?: string;
   total_amount: number;
   currency: string;
-  shipping_address: any;
-  billing_address: any;
-  items: any[];
+  shipping_address: Address;
+  billing_address: Address;
+  items: OrderItem[];
   shipping_method: string;
 }): Promise<Order> => {
   const { data: userData } = await supabase.auth.getUser();

@@ -30,7 +30,7 @@ export async function middleware(request: NextRequest) {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
     // Method 1: Try to get the session from cookies content
-    let { data: sessionData } = await supabase.auth.getSession();
+    const { data: sessionData } = await supabase.auth.getSession();
     let user = sessionData?.session?.user;
     
     // Method 2: If no user, try to use the token from cookies directly
