@@ -1,4 +1,3 @@
-import Image from 'next/image';
 import styles from './page.module.css';
 
 export default function APropos() {
@@ -14,10 +13,10 @@ export default function APropos() {
           <div className={styles.aboutText}>
             <h2>Notre Histoire</h2>
             <p>
-              Jungle CBD est née d'une passion pour les vertus naturelles du chanvre et d'une conviction que la nature offre ce qu'il y a de meilleur pour notre bien-être. Fondée en 2018 par une équipe d'experts passionnés, notre entreprise s'est rapidement imposée comme une référence dans le domaine des produits CBD de haute qualité.
+              Jungle CBD est née d&apos;une passion pour les vertus naturelles du chanvre et d&apos;une conviction que la nature offre ce qu&apos;il y a de meilleur pour notre bien-être. Fondée en 2018 par une équipe d&apos;experts passionnés, notre entreprise s&apos;est rapidement imposée comme une référence dans le domaine des produits CBD de haute qualité.
             </p>
             <p>
-              Notre parcours a commencé lorsque notre fondateur, après avoir découvert les bienfaits du CBD pour soulager ses propres problèmes de stress et d'anxiété, a décidé de créer une gamme de produits qui répondrait aux plus hautes exigences de qualité et d'efficacité.
+              Notre parcours a commencé lorsque notre fondateur, après avoir découvert les bienfaits du CBD pour soulager ses propres problèmes de stress et d&apos;anxiété, a décidé de créer une gamme de produits qui répondrait aux plus hautes exigences de qualité et d&apos;efficacité.
             </p>
           </div>
           <div className={styles.aboutImageContainer}>
@@ -38,13 +37,13 @@ export default function APropos() {
           <div className={styles.aboutText}>
             <h2>Notre Mission</h2>
             <p>
-              Chez Jungle CBD, notre mission est de démocratiser l'accès à des produits CBD de la plus haute qualité, cultivés et fabriqués dans le respect de l'environnement et de votre bien-être.
+              Chez Jungle CBD, notre mission est de démocratiser l&apos;accès à des produits CBD de la plus haute qualité, cultivés et fabriqués dans le respect de l&apos;environnement et de votre bien-être.
             </p>
             <p>
-              Nous sommes convaincus que le CBD peut jouer un rôle important dans l'amélioration de la qualité de vie de nombreuses personnes, et nous nous engageons à proposer des produits innovants, sûrs et efficaces.
+              Nous sommes convaincus que le CBD peut jouer un rôle important dans l&apos;amélioration de la qualité de vie de nombreuses personnes, et nous nous engageons à proposer des produits innovants, sûrs et efficaces.
             </p>
             <p>
-              Nous mettons un point d'honneur à éduquer notre communauté sur les bienfaits du CBD et à dissiper les idées reçues sur ce composé naturel extraordinaire.
+              Nous mettons un point d&apos;honneur à éduquer notre communauté sur les bienfaits du CBD et à dissiper les idées reçues sur ce composé naturel extraordinaire.
             </p>
           </div>
         </div>
@@ -56,7 +55,7 @@ export default function APropos() {
           <div className={styles.valuesGrid}>
             <div className={styles.valueCard}>
               <h3>Qualité</h3>
-              <p>Nous ne faisons aucun compromis sur la qualité de nos produits, depuis la sélection des graines jusqu'à l'emballage final.</p>
+              <p>Nous ne faisons aucun compromis sur la qualité de nos produits, depuis la sélection des graines jusqu&apos;à l&apos;emballage final.</p>
             </div>
             
             <div className={styles.valueCard}>
@@ -81,7 +80,7 @@ export default function APropos() {
         <div className={styles.teamContainer}>
           <h2>Notre Équipe</h2>
           <p className={styles.teamIntro}>
-            Jungle CBD, c'est avant tout une équipe passionnée et dévouée, composée d'experts dans divers domaines, tous unis par la même passion pour le CBD et ses bienfaits.
+            Jungle CBD, c&apos;est avant tout une équipe passionnée et dévouée, composée d&apos;experts dans divers domaines, tous unis par la même passion pour le CBD et ses bienfaits.
           </p>
           
           <div className={styles.teamGrid}>
@@ -89,21 +88,21 @@ export default function APropos() {
               <div className={styles.memberImagePlaceholder}></div>
               <h3>Jean Dubois</h3>
               <p className={styles.memberRole}>Fondateur & CEO</p>
-              <p>Passionné de botanique et d'agriculture durable, Jean a fondé Jungle CBD avec la vision de créer des produits CBD qui respectent à la fois la nature et les consommateurs.</p>
+              <p>Passionné de botanique et d&apos;agriculture durable, Jean a fondé Jungle CBD avec la vision de créer des produits CBD qui respectent à la fois la nature et les consommateurs.</p>
             </div>
             
             <div className={styles.teamMember}>
               <div className={styles.memberImagePlaceholder}></div>
               <h3>Marie Laurent</h3>
               <p className={styles.memberRole}>Responsable Qualité</p>
-              <p>Pharmacienne de formation, Marie supervise tous les aspects de la qualité et s'assure que chaque produit répond aux normes les plus strictes.</p>
+              <p>Pharmacienne de formation, Marie supervise tous les aspects de la qualité et s&apos;assure que chaque produit répond aux normes les plus strictes.</p>
             </div>
             
             <div className={styles.teamMember}>
               <div className={styles.memberImagePlaceholder}></div>
               <h3>Pierre Moreau</h3>
               <p className={styles.memberRole}>Chef des Opérations</p>
-              <p>Fort de 15 ans d'expérience dans l'agriculture biologique, Pierre veille à ce que nos pratiques de culture soient toujours respectueuses de l'environnement.</p>
+              <p>Fort de 15 ans d&apos;expérience dans l&apos;agriculture biologique, Pierre veille à ce que nos pratiques de culture soient toujours respectueuses de l&apos;environnement.</p>
             </div>
           </div>
         </div>
@@ -116,7 +115,7 @@ export default function APropos() {
             <div className={styles.certificationCard}>
               <div className={styles.certificationImagePlaceholder}></div>
               <h3>Agriculture Biologique</h3>
-              <p>Tous nos plants de chanvre sont cultivés selon les principes de l'agriculture biologique, sans pesticides ni produits chimiques.</p>
+              <p>Tous nos plants de chanvre sont cultivés selon les principes de l&apos;agriculture biologique, sans pesticides ni produits chimiques.</p>
             </div>
             
             <div className={styles.certificationCard}>
