@@ -1,19 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useState } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash, faUserShield } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTrash } from '@fortawesome/free-solid-svg-icons';
 import styles from '../admin.module.css';
 import { ADMIN_EMAILS } from '@/config/admins';
-import { supabase } from '@/lib/supabase';
 
 export default function AdminManagement() {
   const [admins, setAdmins] = useState<string[]>([...ADMIN_EMAILS]);
   const [newAdminEmail, setNewAdminEmail] = useState('');
   const [message, setMessage] = useState({ text: '', type: '' });
   const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
 
   const handleAddAdmin = async () => {
     if (!newAdminEmail || !newAdminEmail.includes('@')) {
@@ -42,7 +39,7 @@ export default function AdminManagement() {
       
     } catch (error) {
       console.error('Error adding admin:', error);
-      setMessage({ text: 'Une erreur est survenue lors de l\'ajout de l\'administrateur', type: 'error' });
+      setMessage({ text: 'Une erreur est survenue l&apos;ajout de l&apos;administrateur', type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -50,7 +47,7 @@ export default function AdminManagement() {
 
   const handleRemoveAdmin = async (email: string) => {
     if (email === 'admin@example.com') {
-      setMessage({ text: 'L\'administrateur par défaut ne peut pas être supprimé', type: 'error' });
+      setMessage({ text: 'L&apos;administrateur par défaut ne peut pas être supprimé', type: 'error' });
       return;
     }
 
@@ -69,7 +66,7 @@ export default function AdminManagement() {
       
     } catch (error) {
       console.error('Error removing admin:', error);
-      setMessage({ text: 'Une erreur est survenue lors de la suppression de l\'administrateur', type: 'error' });
+      setMessage({ text: 'Une erreur est survenue lors de la suppression de l&apos;administrateur', type: 'error' });
     } finally {
       setIsLoading(false);
     }
@@ -96,7 +93,7 @@ export default function AdminManagement() {
             <h2>Configuration actuelle</h2>
             <p>
               Pour ajouter définitivement un administrateur, vous devez modifier le fichier 
-              <code>/src/config/admins.ts</code> après avoir testé l'email ici.
+              <code>/src/config/admins.ts</code> après avoir testé l&apos;email ici.
             </p>
             
             <div className={styles.adminForm}>
