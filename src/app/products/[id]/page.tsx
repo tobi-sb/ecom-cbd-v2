@@ -26,8 +26,8 @@ import {
 } from '@fortawesome/free-brands-svg-icons';
 import { faStar as farStar } from '@fortawesome/free-regular-svg-icons';
 import { faHeart as farHeart } from '@fortawesome/free-regular-svg-icons';
-import { getDetailedProduct, getProductColorVariants } from '@/services/product.service';
-import { ProductWithPrices, ColorVariant } from '@/types/database.types';
+import { getDetailedProduct, getProductColorVariants, getProductImages } from '@/services/product.service';
+import { ProductWithPrices, ColorVariant, ProductImage, Category } from '@/types/database.types';
 import { useCart } from '@/contexts/CartContext';
 
 // Fonction pour afficher les étoiles de notation
@@ -54,8 +54,8 @@ const renderRating = (rating: number = 5) => {
 
 export default function ProductDetailPage() {
   const router = useRouter();
-  const { id } = useParams();
-  const productId = typeof id === 'string' ? id : id?.[0] || '1';
+  const params = useParams();
+  const productId = typeof params.id === 'string' ? params.id : Array.isArray(params.id) ? params.id[0] : '';
   const { addToCart } = useCart();
   
   const [product, setProduct] = useState<ProductWithPrices | null>(null);
@@ -63,20 +63,42 @@ export default function ProductDetailPage() {
   const [mainImage, setMainImage] = useState<string>('');
   const [selectedWeight, setSelectedWeight] = useState<string>('default');
   const [quantity, setQuantity] = useState(1);
+  const [inputValue, setInputValue] = useState("1");
   const [activeTab, setActiveTab] = useState('description');
   const [isFavorite, setIsFavorite] = useState(false);
   const [addingToCart, setAddingToCart] = useState(false);
   const [showNotification, setShowNotification] = useState(false);
   const [colorVariants, setColorVariants] = useState<ColorVariant[]>([]);
   const [selectedVariant, setSelectedVariant] = useState<ColorVariant | null>(null);
+  const [productImages, setProductImages] = useState<ProductImage[]>([]);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    // Vérifier si l'écran est mobile
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth <= 576);
+    };
+    
+    // Vérifier au chargement
+    checkIfMobile();
+    
+    // Ajouter un écouteur d'événement pour les changements de taille
+    window.addEventListener('resize', checkIfMobile);
+    
+    // Nettoyer l'écouteur lors du démontage du composant
+    return () => {
+      window.removeEventListener('resize', checkIfMobile);
+    };
+  }, []);
 
   useEffect(() => {
     const fetchProduct = async () => {
       setLoading(true);
       try {
-        const [productData, variants] = await Promise.all([
+        const [productData, variants, images] = await Promise.all([
           getDetailedProduct(productId),
-          getProductColorVariants(productId)
+          getProductColorVariants(productId),
+          getProductImages(productId)
         ]);
         
         if (!productData) {
@@ -87,6 +109,7 @@ export default function ProductDetailPage() {
         
         setProduct(productData);
         setColorVariants(variants);
+        setProductImages(images);
         
         // Set default values
         if (productData.image_url) {
@@ -119,17 +142,46 @@ export default function ProductDetailPage() {
   }
   
   const selectedWeightOption = product.weightOptions.find(option => option.weight === selectedWeight) || product.weightOptions[0];
-  const categoryDetails = product.categories as any;
+  const categoryDetails = product.categories as Category;
   
   const incrementQuantity = () => {
     if (quantity < 10) {
-      setQuantity(quantity + 1);
+      const newValue = quantity + 1;
+      setQuantity(newValue);
+      setInputValue(newValue.toString());
     }
   };
   
   const decrementQuantity = () => {
     if (quantity > 1) {
-      setQuantity(quantity - 1);
+      const newValue = quantity - 1;
+      setQuantity(newValue);
+      setInputValue(newValue.toString());
+    }
+  };
+  
+  const handleQuantityChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setInputValue(value);
+    
+    if (value === "") return;
+    
+    const parsed = parseInt(value);
+    if (!isNaN(parsed)) {
+      const bounded = Math.min(Math.max(parsed, 1), 10);
+      setQuantity(bounded);
+    }
+  };
+  
+  const handleQuantityBlur = () => {
+    // Make sure the input shows a valid number on blur
+    if (inputValue === "" || isNaN(parseInt(inputValue))) {
+      setInputValue("1");
+      setQuantity(1);
+    } else {
+      const bounded = Math.min(Math.max(parseInt(inputValue), 1), 10);
+      setInputValue(bounded.toString());
+      setQuantity(bounded);
     }
   };
 
@@ -183,8 +235,21 @@ export default function ProductDetailPage() {
     return basePrice + (selectedVariant.price_adjustment || 0);
   };
 
-  // Default product images if none are provided
-  const productImages = [product.image_url || '/images/placeholder-product.jpg'];
+  // Fonction pour calculer le prix au gramme
+  const getPricePerGram = (price: number, weight: string): string => {
+    // Pour les options de prix spéciales (résines) ou personnalisées qui ne sont pas en gramme
+    if (!weight.includes('g') || weight === 'default') return '';
+    
+    // Extraire le nombre de grammes du format "Xg"
+    const grams = parseInt(weight.replace('g', ''));
+    if (isNaN(grams) || grams <= 0) return '';
+    
+    // Calculer le prix par gramme
+    const pricePerGram = price / grams;
+    
+    // Formater avec 2 décimales
+    return `${pricePerGram.toFixed(2)}€/g`;
+  };
 
   return (
     <>
@@ -211,7 +276,7 @@ export default function ProductDetailPage() {
         <div className={styles.container}>
           <div className={styles.productDetailGrid}>
             {/* Product Images */}
-            <div className={styles.productGallery}>
+            <div className={styles.productGallery} style={{ marginTop: isMobile ? '20px' : '0' }}>
               <div className={styles.productMainImage}>
                 <Image 
                   src={mainImage || '/images/placeholder-product.jpg'} 
@@ -250,6 +315,27 @@ export default function ProductDetailPage() {
                     style={{ objectFit: 'cover' }}
                   />
                 </div>
+
+                {/* Additional product images */}
+                {productImages.filter(img => !img.is_primary).map((img) => (
+                  <div 
+                    key={img.id} 
+                    className={`${styles.thumbnail} ${mainImage === img.image_url ? styles.active : ''}`}
+                    onClick={() => {
+                      setSelectedVariant(null);
+                      setMainImage(img.image_url);
+                    }}
+                  >
+                    <Image 
+                      src={img.image_url} 
+                      alt={product?.name || 'Product'}
+                      width={100}
+                      height={100}
+                      style={{ objectFit: 'cover' }}
+                    />
+                  </div>
+                ))}
+
                 {/* Color variant thumbnails */}
                 {colorVariants.map((variant) => (
                   <div 
@@ -325,17 +411,30 @@ export default function ProductDetailPage() {
               
               <div className={styles.productMeta}>
                 <div className={styles.productRating}>
-                  {renderRating(5)}
-                  <span className={styles.ratingCount}>(5.0) - 0 avis</span>
+                  {renderRating(product.rating || 0)}
+                  <span className={styles.ratingCount}>
+                    ({product.rating ? product.rating.toFixed(1) : '0.0'}) - {product.review_count || 0} avis
+                  </span>
                 </div>
               </div>
               
               <div className={styles.productPrice}>
-                <span className={styles.priceAmount}>
-                  {getAdjustedPrice(selectedWeightOption.price).toFixed(2)}€
-                </span>
+                {selectedWeightOption.discounted_price ? (
+                  <div style={{ display: 'flex', alignItems: 'baseline' }}>
+                    <span className={styles.priceOriginal}>
+                      {getAdjustedPrice(selectedWeightOption.price).toFixed(2)}€
+                    </span>
+                    <span className={styles.productDetailPriceDiscount}>
+                      {getAdjustedPrice(selectedWeightOption.discounted_price).toFixed(2)}€
+                    </span>
+                  </div>
+                ) : (
+                  <span className={styles.productDetailPriceNormal}>
+                    {getAdjustedPrice(selectedWeightOption.price).toFixed(2)}€
+                  </span>
+                )}
                 {selectedWeight !== 'default' && (
-                <span className={styles.priceWeight}>pour {selectedWeight}</span>
+                  <span className={styles.priceWeight}>pour {selectedWeight}</span>
                 )}
               </div>
               
@@ -344,45 +443,30 @@ export default function ProductDetailPage() {
               </div>
               
               {/* Weight Options Section - Moved above attributes */}
+              {product.weightOptions.length > 1 && (
               <div className={styles.productForm} style={{ marginBottom: '20px' }}>
-                {product.weightOptions.length > 1 && (
                   <div className={styles.formGroup}>
                     <label htmlFor="weight">Poids</label>
                     <div className={styles.optionButtons}>
-                      {product.weightOptions.map((option, index) => (
-                        <button 
-                          key={index}
-                          className={`${styles.optionBtn} ${selectedWeight === option.weight ? styles.active : ''}`}
-                          onClick={() => setSelectedWeight(option.weight)}
-                        >
-                          {option.weight}
-                        </button>
-                      ))}
+                      {product.weightOptions.map((option, index) => {
+                        const pricePerGram = getPricePerGram(getAdjustedPrice(option.price), option.weight);
+                        return (
+                          <button 
+                            key={index}
+                            className={`${styles.optionBtn} ${selectedWeight === option.weight ? styles.active : ''}`}
+                            onClick={() => setSelectedWeight(option.weight)}
+                          >
+                            <span>{option.weight}</span>
+                            {option.weight !== 'default' && (
+                              <span className={styles.pricePerGram}>{pricePerGram}</span>
+                            )}
+                          </button>
+                        );
+                      })}
+                    </div>
                     </div>
                   </div>
                 )}
-              </div>
-              
-              <div className={styles.productAttributes}>
-                <div className={styles.attribute}>
-                  <span className={styles.attributeName}>Origine:</span>
-                  <span className={styles.attributeValue}>{product.origin}</span>
-                </div>
-                <div className={styles.attribute}>
-                  <span className={styles.attributeName}>CBD:</span>
-                  <span className={styles.attributeValue}>{product.cbd_percentage}%</span>
-                </div>
-                <div className={styles.attribute}>
-                  <span className={styles.attributeName}>Culture:</span>
-                  <span className={styles.attributeValue}>{product.culture_type === 'indoor' ? 'Indoor' : 'Outdoor'}</span>
-                </div>
-                {categoryDetails && (
-                  <div className={styles.attribute}>
-                    <span className={styles.attributeName}>Catégorie:</span>
-                    <span className={styles.attributeValue}>{categoryDetails.name}</span>
-                  </div>
-                )}
-              </div>
               
               {/* Quantity and Actions Section */}
               <div className={styles.productForm} style={{ marginTop: '20px' }}>
@@ -397,12 +481,15 @@ export default function ProductDetailPage() {
                       <FontAwesomeIcon icon={faMinus} />
                     </button>
                     <input 
-                      type="number"
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       id="quantity"
-                      value={quantity}
+                      value={inputValue}
                       min="1"
                       max="10"
-                      readOnly
+                      onChange={handleQuantityChange}
+                      onBlur={handleQuantityBlur}
                       className={styles.quantityInput}
                     />
                     <button 
@@ -432,6 +519,32 @@ export default function ProductDetailPage() {
                   </button>
                 </div>
               </div>
+
+              {/* N'afficher la div des attributs que si au moins un attribut est présent - Moved below cart button */}
+              {(product.origin || 
+                (product.cbd_percentage !== null && product.cbd_percentage !== undefined) || 
+                (product.culture_type && product.culture_type !== 'none')) && (
+              <div className={styles.productAttributes} style={{ marginTop: '20px' }}>
+                  {product.origin && (
+                <div className={styles.attribute}>
+                  <span className={styles.attributeName}>Origine:</span>
+                  <span className={styles.attributeValue}>{product.origin}</span>
+                </div>
+                  )}
+                  {product.cbd_percentage !== null && product.cbd_percentage !== undefined && (
+                <div className={styles.attribute}>
+                  <span className={styles.attributeName}>CBD:</span>
+                  <span className={styles.attributeValue}>{product.cbd_percentage}%</span>
+                </div>
+                  )}
+                  {product.culture_type && product.culture_type !== 'none' && (
+                <div className={styles.attribute}>
+                  <span className={styles.attributeName}>Culture:</span>
+                  <span className={styles.attributeValue}>{product.culture_type === 'indoor' ? 'Indoor' : 'Outdoor'}</span>
+                </div>
+                  )}
+                  </div>
+                )}
               
               <div className={styles.productFeatures}>
                 <div className={styles.feature}>
@@ -520,7 +633,21 @@ export default function ProductDetailPage() {
               <div className={styles.description}>
                 <h3>Description du produit</h3>
                 <p>{product.description}</p>
-                <p>Ce produit provient de {product.origin} et possède un taux de CBD de {product.cbd_percentage}%. Il est cultivé en {product.culture_type === 'indoor' ? 'intérieur (indoor)' : 'extérieur (outdoor)'} dans des conditions optimales.</p>
+                
+                {/* Affichage conditionnel des caractéristiques du produit */}
+                {(product.origin || (product.cbd_percentage !== null && product.cbd_percentage !== undefined) || (product.culture_type && product.culture_type !== 'none')) && (
+                  <p>
+                    Ce produit 
+                    {product.origin && ` provient de ${product.origin}`}
+                    {product.origin && (product.cbd_percentage !== null && product.cbd_percentage !== undefined) && ' et '}
+                    {(product.cbd_percentage !== null && product.cbd_percentage !== undefined) && ` possède un taux de CBD de ${product.cbd_percentage}%`}
+                    {((product.origin || (product.cbd_percentage !== null && product.cbd_percentage !== undefined)) && (product.culture_type && product.culture_type !== 'none')) && '. Il est '}
+                    {(!(product.origin || (product.cbd_percentage !== null && product.cbd_percentage !== undefined)) && (product.culture_type && product.culture_type !== 'none')) && ' est '}
+                    {(product.culture_type && product.culture_type !== 'none') && `cultivé en ${product.culture_type === 'indoor' ? 'intérieur (indoor)' : 'extérieur (outdoor)'} dans des conditions optimales`}
+                    .
+                  </p>
+                )}
+                
                 {categoryDetails && categoryDetails.description && (
                   <div className={styles.categoryDescription}>
                     <h4>À propos de cette catégorie: {categoryDetails.name}</h4>
@@ -540,23 +667,29 @@ export default function ProductDetailPage() {
                       <th>Poids disponibles</th>
                       <td>{product.weightOptions.map(o => o.weight).join(', ')}</td>
                     </tr>
+                    {(product.cbd_percentage !== null && product.cbd_percentage !== undefined) && (
                     <tr>
                       <th>Taux de CBD</th>
                       <td>{product.cbd_percentage}%</td>
                     </tr>
+                    )}
                     <tr>
                       <th>Taux de THC</th>
                       <td>&lt; 0,3%</td>
                     </tr>
+                    {product.origin && (
                     <tr>
                       <th>Origine</th>
                       <td>{product.origin}</td>
                     </tr>
+                    )}
+                    {product.culture_type && product.culture_type !== 'none' && (
                     <tr>
                       <th>Type de culture</th>
                       <td>{product.culture_type === 'indoor' ? 'Indoor' : 'Outdoor'}</td>
                     </tr>
-                    {categoryDetails && (
+                    )}
+                    {categoryDetails && categoryDetails.name && (
                       <tr>
                         <th>Catégorie</th>
                         <td>{categoryDetails.name}</td>

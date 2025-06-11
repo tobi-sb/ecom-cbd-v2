@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import styles from './admin.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
@@ -20,7 +21,16 @@ import PromoCodesTab from './components/PromoCodesTab';
 import { supabase } from '@/lib/supabase';
 
 export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('products');
+  const searchParams = useSearchParams();
+  const tabParam = searchParams.get('tab');
+  const [activeTab, setActiveTab] = useState(tabParam || 'products');
+  
+  // Update active tab when URL parameters change
+  useEffect(() => {
+    if (tabParam && ['dashboard', 'products', 'categories', 'orders', 'promocodes'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
 
   return (
     <div className={styles.adminContainer}>

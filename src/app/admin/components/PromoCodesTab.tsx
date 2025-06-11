@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash, faEdit } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faTrash, faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
 import styles from '../admin.module.css';
 
 interface PromoCode {
@@ -283,7 +283,7 @@ export default function PromoCodesTab() {
                     onChange={(e) => setFormData({ ...formData, is_active: e.target.checked })}
                     className={styles.checkboxInput}
                   />
-                  <span className={styles.checkboxWrapper}>Code promo actif</span>
+                  <span style={{ marginLeft: '10px', padding: '0' }}>Code promo actif</span>
                 </label>
               </div>
 
@@ -298,8 +298,8 @@ export default function PromoCodesTab() {
                 >
                   Annuler
                 </button>
-                <button type="submit" className={styles.btnSave}>
-                  {editingPromo ? 'Mettre à jour' : 'Créer'}
+                <button type="submit" className={styles.btnSubmit}>
+                  {editingPromo ? <><FontAwesomeIcon icon={faSave} /> Mettre à jour</> : <><FontAwesomeIcon icon={faPlus} /> Créer</>}
                 </button>
               </div>
             </form>

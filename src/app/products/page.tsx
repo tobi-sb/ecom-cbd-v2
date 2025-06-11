@@ -1,14 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from '../styles.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faFilter, 
-  faStar, 
-  faStarHalfAlt
+  faFilter,
+  faXmark
 } from '@fortawesome/free-solid-svg-icons';
-import { faStar as farStar } from '@fortawesome/free-regular-svg-icons';
 import Image from 'next/image';
 import Link from 'next/link';
 import { getAllProducts, getProductsByCategory, getAllCategories } from '@/services/product.service';
@@ -21,11 +19,80 @@ export default function ProductsPage() {
   const [loading, setLoading] = useState(true);
   const [activeCategory, setActiveCategory] = useState('all');
   const [filterVisible, setFilterVisible] = useState(false);
+  const [mobileFilterVisible, setMobileFilterVisible] = useState(false);
   const [sortOrder, setSortOrder] = useState('default');
   const [priceRange, setPriceRange] = useState<[number, number]>([0, 100]);
   const [categories, setCategories] = useState<(Category & { count: number })[]>([]);
   const [popularProducts, setPopularProducts] = useState<Product[]>([]);
   const [showNotification, setShowNotification] = useState(false);
+  
+  // For custom dropdown styling
+  const [showCategoryDropdown, setShowCategoryDropdown] = useState(false);
+  const [showSortDropdown, setShowSortDropdown] = useState(false);
+  const [showMobileCategoryDropdown, setShowMobileCategoryDropdown] = useState(false);
+  const [showMobileSortDropdown, setShowMobileSortDropdown] = useState(false);
+  
+  const categoryDropdownRef = useRef<HTMLDivElement>(null);
+  const sortDropdownRef = useRef<HTMLDivElement>(null);
+  const mobileCategoryDropdownRef = useRef<HTMLDivElement>(null);
+  const mobileSortDropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Close dropdowns when clicking outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (categoryDropdownRef.current && !categoryDropdownRef.current.contains(event.target as Node)) {
+        setShowCategoryDropdown(false);
+      }
+      if (sortDropdownRef.current && !sortDropdownRef.current.contains(event.target as Node)) {
+        setShowSortDropdown(false);
+      }
+      if (mobileCategoryDropdownRef.current && !mobileCategoryDropdownRef.current.contains(event.target as Node)) {
+        setShowMobileCategoryDropdown(false);
+      }
+      if (mobileSortDropdownRef.current && !mobileSortDropdownRef.current.contains(event.target as Node)) {
+        setShowMobileSortDropdown(false);
+      }
+    }
+    
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+  
+  // Detect if screen is mobile
+  const [isMobile, setIsMobile] = useState(false);
+  
+  useEffect(() => {
+    const checkIfMobile = () => {
+      setIsMobile(window.innerWidth <= 768);
+    };
+    
+    // Initial check
+    checkIfMobile();
+    
+    // Add event listener
+    window.addEventListener('resize', checkIfMobile);
+    
+    // Cleanup
+    return () => window.removeEventListener('resize', checkIfMobile);
+  }, []);
+  
+  // Disable body scrolling when filter modal is open
+  useEffect(() => {
+    if (mobileFilterVisible) {
+      // Add class to prevent body scrolling
+      document.body.classList.add(styles.bodyNoScroll);
+    } else {
+      // Remove class when filter is closed
+      document.body.classList.remove(styles.bodyNoScroll);
+    }
+    
+    // Cleanup on unmount
+    return () => {
+      document.body.classList.remove(styles.bodyNoScroll);
+    };
+  }, [mobileFilterVisible, styles.bodyNoScroll]);
   
   // Fetch categories and products from Supabase
   useEffect(() => {
@@ -146,6 +213,13 @@ export default function ProductsPage() {
     setShowNotification(true);
   };
 
+  // Reset all filters to default values
+  const resetFilters = () => {
+    setActiveCategory('all');
+    setSortOrder('default');
+    setPriceRange([0, 100]);
+  };
+
   // Display loading state while fetching products
   if (loading) {
     return (
@@ -172,47 +246,123 @@ export default function ProductsPage() {
         <div className={styles.container}>
           <button 
             className={styles.btnOutline} 
-            onClick={() => setFilterVisible(!filterVisible)}
+            onClick={() => {
+              if (isMobile) {
+                setMobileFilterVisible(true);
+              } else {
+                setFilterVisible(!filterVisible);
+              }
+            }}
           >
             <FontAwesomeIcon icon={faFilter} /> Filtrer les produits
           </button>
           
-          {filterVisible && (
+          {/* Desktop filter */}
+          {!isMobile && filterVisible && (
             <div className={styles.filterContainer}>
+              {/* Custom Category Dropdown */}
               <div className={styles.filterGroup}>
                 <label htmlFor="category">Catégorie</label>
-                <select 
-                  id="category" 
-                  className={styles.filterSelect}
-                  value={activeCategory}
-                  onChange={(e) => setActiveCategory(e.target.value)}
+                <div 
+                  className={styles.customSelect} 
+                  onClick={() => setShowCategoryDropdown(!showCategoryDropdown)}
+                  ref={categoryDropdownRef}
                 >
-                  {categories.map(category => (
-                    <option key={category.id} value={category.slug}>
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
+                  <div className={styles.selectedOption}>
+                    {categories.find(c => c.slug === activeCategory)?.name || 'Sélectionner une catégorie'}
+                    <span className={styles.dropdownArrow}>▼</span>
+                  </div>
+                  
+                  {showCategoryDropdown && (
+                    <div className={styles.options}>
+                      {categories.map(category => (
+                        <div 
+                          key={category.id}
+                          className={`${styles.option} ${activeCategory === category.slug ? styles.selectedOption : ''}`}
+                          onClick={() => {
+                            setActiveCategory(category.slug);
+                            setShowCategoryDropdown(false);
+                          }}
+                        >
+                          {category.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
               </div>
               
+              {/* Custom Sort Dropdown */}
               <div className={styles.filterGroup}>
                 <label htmlFor="sort">Trier par</label>
-                <select 
-                  id="sort" 
-                  className={styles.filterSelect}
-                  value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value)}
+                <div 
+                  className={styles.customSelect} 
+                  onClick={() => setShowSortDropdown(!showSortDropdown)}
+                  ref={sortDropdownRef}
                 >
-                  <option value="default">Tri par défaut</option>
-                  <option value="popularity">Popularité</option>
-                  <option value="price-low">Prix croissant</option>
-                  <option value="price-high">Prix décroissant</option>
-                  <option value="newest">Nouveautés</option>
-                </select>
+                  <div className={styles.selectedOption}>
+                    {sortOrder === 'default' && 'Tri par défaut'}
+                    {sortOrder === 'popularity' && 'Popularité'}
+                    {sortOrder === 'price-low' && 'Prix croissant'}
+                    {sortOrder === 'price-high' && 'Prix décroissant'}
+                    {sortOrder === 'newest' && 'Nouveautés'}
+                    <span className={styles.dropdownArrow}>▼</span>
+                  </div>
+                  
+                  {showSortDropdown && (
+                    <div className={styles.options}>
+                      <div 
+                        className={`${styles.option} ${sortOrder === 'default' ? styles.selectedOption : ''}`}
+                        onClick={() => {
+                          setSortOrder('default');
+                          setShowSortDropdown(false);
+                        }}
+                      >
+                        Tri par défaut
+                      </div>
+                      <div 
+                        className={`${styles.option} ${sortOrder === 'popularity' ? styles.selectedOption : ''}`}
+                        onClick={() => {
+                          setSortOrder('popularity');
+                          setShowSortDropdown(false);
+                        }}
+                      >
+                        Popularité
+                      </div>
+                      <div 
+                        className={`${styles.option} ${sortOrder === 'price-low' ? styles.selectedOption : ''}`}
+                        onClick={() => {
+                          setSortOrder('price-low');
+                          setShowSortDropdown(false);
+                        }}
+                      >
+                        Prix croissant
+                      </div>
+                      <div 
+                        className={`${styles.option} ${sortOrder === 'price-high' ? styles.selectedOption : ''}`}
+                        onClick={() => {
+                          setSortOrder('price-high');
+                          setShowSortDropdown(false);
+                        }}
+                      >
+                        Prix décroissant
+                      </div>
+                      <div 
+                        className={`${styles.option} ${sortOrder === 'newest' ? styles.selectedOption : ''}`}
+                        onClick={() => {
+                          setSortOrder('newest');
+                          setShowSortDropdown(false);
+                        }}
+                      >
+                        Nouveautés
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
               
               <div className={styles.filterGroup}>
-                <label htmlFor="price-range">Gamme de prix</label>
+                <label htmlFor="price-range">Gamme de prix: <span style={{ color: '#d4af37', fontWeight: 'bold' }}>{priceRange[1]}€</span></label>
                 <input 
                   type="range" 
                   id="price-range" 
@@ -226,6 +376,166 @@ export default function ProductsPage() {
                   <span>0€</span>
                   <span>100€</span>
                 </div>
+              </div>
+
+              {/* Reset Filters Button */}
+              <div className={styles.filterGroup}>
+                <button 
+                  className={styles.resetFilterBtn}
+                  onClick={resetFilters}
+                >
+                  Réinitialiser les filtres
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {/* Mobile filter modal */}
+          {isMobile && mobileFilterVisible && (
+            <div className={styles.mobileFilterContainer}>
+              <div className={styles.mobileFilterPanel}>
+                <div className={styles.mobileFilterHeader}>
+                  <h3>Filtrer les produits</h3>
+                  <button 
+                    className={styles.closeFilterBtn}
+                    onClick={() => setMobileFilterVisible(false)}
+                  >
+                    <FontAwesomeIcon icon={faXmark} />
+                  </button>
+                </div>
+                
+                {/* Mobile Custom Category Dropdown */}
+                <div className={styles.filterGroup}>
+                  <label htmlFor="mobile-category">Catégorie</label>
+                  <div 
+                    className={styles.customSelect} 
+                    onClick={() => setShowMobileCategoryDropdown(!showMobileCategoryDropdown)}
+                    ref={mobileCategoryDropdownRef}
+                  >
+                    <div className={styles.selectedOption}>
+                      {categories.find(c => c.slug === activeCategory)?.name || 'Sélectionner une catégorie'}
+                      <span className={styles.dropdownArrow}>▼</span>
+                    </div>
+                    
+                    {showMobileCategoryDropdown && (
+                      <div className={styles.options}>
+                        {categories.map(category => (
+                          <div 
+                            key={category.id}
+                            className={`${styles.option} ${activeCategory === category.slug ? styles.selectedOption : ''}`}
+                            onClick={() => {
+                              setActiveCategory(category.slug);
+                              setShowMobileCategoryDropdown(false);
+                            }}
+                          >
+                            {category.name}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                {/* Mobile Custom Sort Dropdown */}
+                <div className={styles.filterGroup}>
+                  <label htmlFor="mobile-sort">Trier par</label>
+                  <div 
+                    className={styles.customSelect} 
+                    onClick={() => setShowMobileSortDropdown(!showMobileSortDropdown)}
+                    ref={mobileSortDropdownRef}
+                  >
+                    <div className={styles.selectedOption}>
+                      {sortOrder === 'default' && 'Tri par défaut'}
+                      {sortOrder === 'popularity' && 'Popularité'}
+                      {sortOrder === 'price-low' && 'Prix croissant'}
+                      {sortOrder === 'price-high' && 'Prix décroissant'}
+                      {sortOrder === 'newest' && 'Nouveautés'}
+                      <span className={styles.dropdownArrow}>▼</span>
+                    </div>
+                    
+                    {showMobileSortDropdown && (
+                      <div className={styles.options}>
+                        <div 
+                          className={`${styles.option} ${sortOrder === 'default' ? styles.selectedOption : ''}`}
+                          onClick={() => {
+                            setSortOrder('default');
+                            setShowMobileSortDropdown(false);
+                          }}
+                        >
+                          Tri par défaut
+                        </div>
+                        <div 
+                          className={`${styles.option} ${sortOrder === 'popularity' ? styles.selectedOption : ''}`}
+                          onClick={() => {
+                            setSortOrder('popularity');
+                            setShowMobileSortDropdown(false);
+                          }}
+                        >
+                          Popularité
+                        </div>
+                        <div 
+                          className={`${styles.option} ${sortOrder === 'price-low' ? styles.selectedOption : ''}`}
+                          onClick={() => {
+                            setSortOrder('price-low');
+                            setShowMobileSortDropdown(false);
+                          }}
+                        >
+                          Prix croissant
+                        </div>
+                        <div 
+                          className={`${styles.option} ${sortOrder === 'price-high' ? styles.selectedOption : ''}`}
+                          onClick={() => {
+                            setSortOrder('price-high');
+                            setShowMobileSortDropdown(false);
+                          }}
+                        >
+                          Prix décroissant
+                        </div>
+                        <div 
+                          className={`${styles.option} ${sortOrder === 'newest' ? styles.selectedOption : ''}`}
+                          onClick={() => {
+                            setSortOrder('newest');
+                            setShowMobileSortDropdown(false);
+                          }}
+                        >
+                          Nouveautés
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+                
+                <div className={styles.filterGroup}>
+                  <label htmlFor="mobile-price-range">Gamme de prix: <span style={{ color: '#d4af37', fontWeight: 'bold' }}>{priceRange[1]}€</span></label>
+                  <input 
+                    type="range" 
+                    id="mobile-price-range" 
+                    min="0" 
+                    max="100" 
+                    value={priceRange[1]}
+                    onChange={(e) => setPriceRange([0, Number(e.target.value)])}
+                    className={styles.priceRange}
+                  />
+                  <div className={styles.priceLabels}>
+                    <span>0€</span>
+                    <span>100€</span>
+                  </div>
+                </div>
+                
+                {/* Reset Filters Button */}
+                <button 
+                  className={styles.resetFilterBtn}
+                  onClick={resetFilters}
+                >
+                  Réinitialiser les filtres
+                </button>
+                
+                <button 
+                  className={styles.applyFilterBtn}
+                  onClick={() => setMobileFilterVisible(false)}
+                >
+                  Appliquer les filtres
+                </button>
               </div>
             </div>
           )}
@@ -286,7 +596,13 @@ export default function ProductsPage() {
                         </div>
                         <div className={styles.popularProductInfo}>
                           <h4>{product.name}</h4>
-                          <span className={styles.popularProductPrice}>{product.price_3g.toFixed(2)}€</span>
+                          <span className={styles.popularProductPrice}>
+                            {product.base_price > 0 
+                              ? `${product.base_price.toFixed(2)}€` 
+                              : product.price_3g > 0 
+                                ? `${product.price_3g.toFixed(2)}€` 
+                                : "0.00€"}
+                          </span>
                         </div>
                       </div>
                     </Link>
@@ -305,6 +621,12 @@ export default function ProductsPage() {
                       name={product.name}
                       description={product.description}
                       price={product.price_3g}
+                      discounted_price={product.discounted_price}
+                      base_price={product.base_price}
+                      price_3g={product.price_3g}
+                      price_5g={product.price_5g}
+                      price_10g={product.price_10g}
+                      price_20g={product.price_20g}
                       image={product.image_url || '/images/placeholder-product.jpg'}
                       tag={product.tag}
                       onAddToCart={handleAddToCart}

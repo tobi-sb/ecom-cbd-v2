@@ -4,7 +4,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import styles from '../styles.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faCartPlus, faCheck } from '@fortawesome/free-solid-svg-icons';
+import { faCartPlus } from '@fortawesome/free-solid-svg-icons';
 import { useCart } from '@/contexts/CartContext';
 import { useState } from 'react';
 
@@ -13,6 +13,12 @@ interface ProductCardProps {
   name: string;
   description: string;
   price: number;
+  discounted_price?: number | null;
+  base_price?: number;
+  price_3g?: number;
+  price_5g?: number;
+  price_10g?: number;
+  price_20g?: number;
   image: string;
   tag?: string;
   onAddToCart?: () => void;
@@ -29,6 +35,12 @@ const ProductCard = ({
   name, 
   description, 
   price, 
+  discounted_price,
+  base_price,
+  price_3g,
+  price_5g,
+  price_10g,
+  price_20g,
   image, 
   tag,
   onAddToCart,
@@ -36,6 +48,19 @@ const ProductCard = ({
 }: ProductCardProps) => {
   const { addToCart } = useCart();
   const [adding, setAdding] = useState(false);
+
+  // Déterminer si c'est un produit avec un prix de base ou des prix au gramme
+  const hasWeightPricing = price_3g && price_3g > 0 || price_5g && price_5g > 0 || 
+                         price_10g && price_10g > 0 || price_20g && price_20g > 0;
+  
+  // Déterminer le prix à afficher
+  const displayPrice = base_price && base_price > 0 ? base_price : price;
+  
+  // Déterminer si le produit a un prix réduit
+  const hasDiscount = discounted_price !== null && discounted_price !== undefined && discounted_price > 0;
+  
+  // Déterminer le prix à afficher dans le panier (le prix réduit s'il existe)
+  const cartPrice = hasDiscount ? discounted_price : displayPrice;
 
   const handleAddToCart = (e: React.MouseEvent) => {
     // Stop propagation to prevent navigation when clicking the cart button
@@ -48,7 +73,7 @@ const ProductCard = ({
     addToCart({
       id,
       name,
-      price,
+      price: cartPrice,
       image,
       description
     });
@@ -83,7 +108,20 @@ const ProductCard = ({
             <h3>{name}</h3>
             <p className={styles.productDescription}>{truncatedDescription}</p>
             <div className={styles.productPrice} style={customStyles.productPrice}>
-              <span className={styles.price} style={customStyles.price}>{price.toFixed(2)}€</span>
+              {hasDiscount ? (
+                <div className={styles.priceContainer}>
+                  <span className={styles.priceOriginal}>
+                    {hasWeightPricing ? `À partir de ${displayPrice.toFixed(2)}€` : `${displayPrice.toFixed(2)}€`}
+                  </span>
+                  <span className={styles.productListPriceDiscount}>
+                    {hasWeightPricing ? `À partir de ${discounted_price?.toFixed(2)}€` : `${discounted_price?.toFixed(2)}€`}
+                  </span>
+                </div>
+              ) : (
+                <span className={styles.productListPriceNormal} style={customStyles.price}>
+                  {hasWeightPricing ? `À partir de ${displayPrice.toFixed(2)}€` : `${displayPrice.toFixed(2)}€`}
+                </span>
+              )}
               <button 
                 className={`${styles.addToCartBtn} ${adding ? styles.adding : ''}`} 
                 onClick={handleAddToCart}

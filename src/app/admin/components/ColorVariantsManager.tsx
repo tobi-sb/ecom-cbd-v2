@@ -15,7 +15,11 @@ interface ColorVariantsManagerProps {
 
 export default function ColorVariantsManager({ productId, initialVariants, onVariantsChange }: ColorVariantsManagerProps) {
   const [variants, setVariants] = useState<ColorVariant[]>(initialVariants);
-  const [newVariant, setNewVariant] = useState({
+  const [newVariant, setNewVariant] = useState<{
+    color_name: string;
+    price_adjustment: number | null;
+    is_default: boolean;
+  }>({
     color_name: '',
     price_adjustment: 0,
     is_default: false
@@ -70,7 +74,7 @@ export default function ColorVariantsManager({ productId, initialVariants, onVar
         product_id: productId,
         color_name: newVariant.color_name,
         image_url: imageUrl,
-        price_adjustment: newVariant.price_adjustment,
+        price_adjustment: newVariant.price_adjustment ?? 0,
         is_default: newVariant.is_default
       });
 
@@ -195,8 +199,8 @@ export default function ColorVariantsManager({ productId, initialVariants, onVar
           <input
             type="number"
             id="price_adjustment"
-            value={newVariant.price_adjustment}
-            onChange={(e) => setNewVariant({ ...newVariant, price_adjustment: parseFloat(e.target.value) || 0 })}
+            value={newVariant.price_adjustment !== undefined && newVariant.price_adjustment !== null ? newVariant.price_adjustment : ''}
+            onChange={(e) => setNewVariant({ ...newVariant, price_adjustment: e.target.value === '' ? null : parseFloat(e.target.value) })}
             step="0.01"
             placeholder="0.00"
           />
@@ -263,7 +267,7 @@ export default function ColorVariantsManager({ productId, initialVariants, onVar
             />
             <div className={styles.variantInfo}>
               <h4>{variant.color_name}</h4>
-              <p>Ajustement de prix: {variant.price_adjustment > 0 ? '+' : ''}{variant.price_adjustment}€</p>
+              <p>Ajustement de prix: {variant.price_adjustment !== undefined ? (variant.price_adjustment > 0 ? '+' : '') + variant.price_adjustment : '0'}€</p>
               {variant.is_default && (
                 <span className={styles.defaultBadge}>
                   <FontAwesomeIcon icon={faStar} /> Par défaut

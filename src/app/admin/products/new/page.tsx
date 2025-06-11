@@ -9,8 +9,8 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faSave, faUpload, faPlus, faTrash, faStar } from '@fortawesome/free-solid-svg-icons';
 import { createProduct } from '@/services/product.service';
 import { getAllCategories } from '@/services/product.service';
-import { Category, ColorVariant } from '@/types/database.types';
-import { uploadProductImage, createColorVariant } from '@/services/product.service';
+import { Category, ColorVariant, PriceOption } from '@/types/database.types';
+import { uploadProductImage, createColorVariant, createProductImage, createPriceOption } from '@/services/product.service';
 import { Product } from '@/types/database.types';
 import ColorVariantsManager from '../../components/ColorVariantsManager';
 
@@ -24,21 +24,43 @@ export default function NewProduct() {
   const [colorVariants, setColorVariants] = useState<ColorVariant[]>([]);
   const [newProductId, setNewProductId] = useState<string | null>(null);
   
-  // For temporary variants before product creation
-  const [tempVariants, setTempVariants] = useState<Array<{
+  // Pour les options de prix dynamiques
+  const [priceOptions, setPriceOptions] = useState<Array<{
+    id: string;
+    weight: string;
+    price: number;
+    is_default: boolean;
+  }>>([]);
+  const [newPriceOption, setNewPriceOption] = useState({
+    weight: '',
+    price: 0,
+    is_default: false
+  });
+  const [useDynamicPricing, setUseDynamicPricing] = useState(false);
+  
+  // État pour gérer les variantes de couleur temporaires
+  interface TempVariant {
     id: string;
     color_name: string;
-    price_adjustment: number;
+    price_adjustment: number | null;
     is_default: boolean;
     image_file: File | null;
     temp_image_preview: string;
-  }>>([]);
+  }
+
+  const [tempVariants, setTempVariants] = useState<TempVariant[]>([]);
   const [showVariantForm, setShowVariantForm] = useState(false);
-  const [tempVariant, setTempVariant] = useState({
+  const [tempVariant, setTempVariant] = useState<{
+    color_name: string;
+    price_adjustment: number | null;
+    is_default: boolean;
+    image_file: File | null;
+    temp_image_preview: string;
+  }>({
     color_name: '',
     price_adjustment: 0,
     is_default: false,
-    image_file: null as File | null,
+    image_file: null,
     temp_image_preview: ''
   });
   
@@ -48,18 +70,30 @@ export default function NewProduct() {
     price_3g: 0,
     price_5g: 0,
     price_10g: 0,
-    price_20g: 0,
+    price_30g: 0,
+    price_50g: 0,
     base_price: 0,
-    cbd_percentage: 0,
-    culture_type: 'indoor' as const,
+    discounted_price: null,
+    cbd_percentage: null,
+    culture_type: 'none',
     origin: '',
     category_id: '',
     tag: '',
     image_url: '',
-    is_featured: false
+    is_featured: false,
+    review_count: 0,
+    rating: 0
   });
 
   const [useWeightPricing, setUseWeightPricing] = useState(false);
+
+  // Pour gérer plusieurs images
+  const [additionalImages, setAdditionalImages] = useState<Array<{
+    id: string;
+    file: File;
+    preview: string;
+    isPrimary: boolean;
+  }>>([]);
 
   useEffect(() => {
     const fetchCategories = async () => {
@@ -76,23 +110,126 @@ export default function NewProduct() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    let parsedValue: string | number = value;
+    let parsedValue: string | number | boolean | null = value;
     
     // Handle numeric fields
     if (
       name === 'price_3g' || 
       name === 'price_5g' || 
       name === 'price_10g' || 
-      name === 'price_20g' || 
-      name === 'cbd_percentage'
+      name === 'price_30g' || 
+      name === 'price_50g' || 
+      name === 'cbd_percentage' ||
+      name === 'review_count' ||
+      name === 'rating'
     ) {
-      parsedValue = value === '' ? 0 : parseFloat(value);
+      parsedValue = value === '' ? null : parseFloat(value);
     }
     
     setFormData({
       ...formData,
       [name]: parsedValue
     });
+  };
+
+  // Gestion du changement de type de prix
+  const handleWeightPricingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setUseWeightPricing(isChecked);
+    
+    // Si on active le prix par poids, on désactive les autres options
+    if (isChecked) {
+      setUseDynamicPricing(false);
+    }
+  };
+  
+  // Gestion du changement de prix dynamique
+  const handleDynamicPricingChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const isChecked = e.target.checked;
+    setUseDynamicPricing(isChecked);
+    
+    // Si on active le prix dynamique, on désactive les autres options
+    if (isChecked) {
+      setUseWeightPricing(false);
+    }
+  };
+  
+  // Gestion du changement dans le formulaire d'option de prix
+  const handlePriceOptionChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    
+    if (name === 'price') {
+      setNewPriceOption({
+        ...newPriceOption,
+        price: value === '' ? 0 : parseFloat(value)
+      });
+    } else {
+      setNewPriceOption({
+        ...newPriceOption,
+        [name]: value
+      });
+    }
+  };
+  
+  // Ajouter une nouvelle option de prix
+  const addPriceOption = () => {
+    if (newPriceOption.weight.trim() === '' || newPriceOption.price <= 0) {
+      setFormError('Veuillez spécifier un poids et un prix valides');
+      return;
+    }
+    
+    const newOption = {
+      id: Date.now().toString(),
+      weight: newPriceOption.weight,
+      price: newPriceOption.price,
+      is_default: priceOptions.length === 0 ? true : newPriceOption.is_default
+    };
+    
+    // Si c'est la première option ou si elle est définie comme par défaut
+    if (newOption.is_default) {
+      // Réinitialiser les autres options
+      setPriceOptions(prev => prev.map(option => ({
+        ...option,
+        is_default: false
+      })));
+    }
+    
+    setPriceOptions(prev => [...prev, newOption]);
+    
+    // Réinitialiser le formulaire
+    setNewPriceOption({
+      weight: '',
+      price: 0,
+      is_default: false
+    });
+  };
+  
+  // Supprimer une option de prix
+  const removePriceOption = (id: string) => {
+    const optionToRemove = priceOptions.find(option => option.id === id);
+    
+    setPriceOptions(prev => prev.filter(option => option.id !== id));
+    
+    // Si l'option supprimée était celle par défaut et qu'il reste d'autres options
+    if (optionToRemove?.is_default && priceOptions.length > 1) {
+      // Définir la première option restante comme celle par défaut
+      const remainingOptions = priceOptions.filter(option => option.id !== id);
+      if (remainingOptions.length > 0) {
+        setPriceOptions(prev => 
+          prev.map((option, index) => index === 0 ? { ...option, is_default: true } : option)
+        );
+      }
+    }
+  };
+  
+  // Définir une option comme celle par défaut
+  const setDefaultPriceOption = (id: string) => {
+    setPriceOptions(prev => 
+      prev.map(option => ({
+        ...option,
+        is_default: option.id === id
+      }))
+    );
   };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -106,7 +243,71 @@ export default function NewProduct() {
         setImagePreview(reader.result as string);
       };
       reader.readAsDataURL(file);
+      
+      // Set as primary in additional images
+      setAdditionalImages(prev => prev.map(img => ({
+        ...img,
+        isPrimary: false
+      })));
     }
+  };
+
+  // Handle additional image upload
+  const handleAdditionalImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      const file = e.target.files[0];
+      
+      // Create a preview URL
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const preview = reader.result as string;
+        
+        // Add to additional images
+        setAdditionalImages(prev => [
+          ...prev,
+          {
+            id: Date.now().toString(),
+            file,
+            preview,
+            isPrimary: !imageFile && prev.length === 0 // Make primary if no main image
+          }
+        ]);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+  
+  // Remove additional image
+  const handleRemoveAdditionalImage = (id: string) => {
+    const imageToRemove = additionalImages.find(img => img.id === id);
+    setAdditionalImages(prev => prev.filter(img => img.id !== id));
+    
+    // If removing a primary image, set main image as primary if available
+    if (imageToRemove?.isPrimary && !imageFile && additionalImages.length > 1) {
+      const remainingImages = additionalImages.filter(img => img.id !== id);
+      if (remainingImages.length > 0) {
+        setAdditionalImages(prev => 
+          prev.map((img, index) => index === 0 ? { ...img, isPrimary: true } : img)
+        );
+      }
+    }
+  };
+  
+  // Set an additional image as primary
+  const handleSetPrimaryImage = (id: string) => {
+    // Clear main image if exists
+    if (imageFile) {
+      setImageFile(null);
+      setImagePreview(null);
+    }
+    
+    // Update additional images
+    setAdditionalImages(prev => 
+      prev.map(img => ({
+        ...img,
+        isPrimary: img.id === id
+      }))
+    );
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -115,25 +316,60 @@ export default function NewProduct() {
     setFormError(null);
     
     try {
-      let imageUrl = '';
+      // Check if we have at least one image (main or additional)
+      if (!imageFile && additionalImages.length === 0) {
+        setFormError('Veuillez ajouter au moins une image pour le produit.');
+        setIsLoading(false);
+        return;
+      }
+
+      // Vérifier que les champs d'avis sont remplis
+      if (formData.review_count === null || formData.review_count === undefined) {
+        setFormError('Le nombre d\'avis est obligatoire.');
+        setIsLoading(false);
+        return;
+      }
+
+      if (formData.rating === null || formData.rating === undefined) {
+        setFormError('L\'évaluation (étoiles) est obligatoire.');
+        setIsLoading(false);
+        return;
+      }
       
+      let mainImageUrl = '';
+      
+      // Upload main image if exists
       if (imageFile) {
         try {
-          imageUrl = await uploadProductImage(imageFile, imageFile.name);
+          mainImageUrl = await uploadProductImage(imageFile, imageFile.name);
         } catch (error) {
           console.error('Error uploading image:', error);
           setFormError('Erreur lors du téléchargement de l\'image. Veuillez réessayer.');
           setIsLoading(false);
           return;
         }
+      } else if (additionalImages.length > 0) {
+        // Use the primary additional image as main image
+        const primaryImage = additionalImages.find(img => img.isPrimary);
+        if (primaryImage) {
+          try {
+            mainImageUrl = await uploadProductImage(primaryImage.file, primaryImage.file.name);
+          } catch (error) {
+            console.error('Error uploading image:', error);
+            setFormError('Erreur lors du téléchargement de l\'image. Veuillez réessayer.');
+            setIsLoading(false);
+            return;
+          }
+        }
       }
       
       const productData = {
         ...formData,
-        image_url: imageUrl
+        image_url: mainImageUrl
       };
       
       const newProduct = await createProduct(productData);
+      setNewProductId(newProduct.id);
       
       // After product creation, create all temporary variants
       if (tempVariants.length > 0) {
@@ -144,7 +380,7 @@ export default function NewProduct() {
               await createColorVariant({
                 product_id: newProduct.id,
                 color_name: variant.color_name,
-                price_adjustment: variant.price_adjustment,
+                price_adjustment: variant.price_adjustment ?? 0,
                 is_default: variant.is_default,
                 image_url: imageUrl
               });
@@ -152,13 +388,45 @@ export default function NewProduct() {
           }
         } catch (variantError) {
           console.error("Error creating variants:", variantError);
-          // Continue with redirect even if variant creation fails
+          // Continue with additional images even if variant creation fails
         }
       }
       
-      // Redirect to edit page where user can add variants
-      router.push(`/admin/products/edit/${newProduct.id}`);
+      // After product creation, create all price options if using dynamic pricing
+      if (useDynamicPricing && priceOptions.length > 0) {
+        try {
+          for (const option of priceOptions) {
+            await createPriceOption({
+              product_id: newProduct.id,
+              weight: option.weight,
+              price: option.price,
+              is_default: option.is_default
+            });
+          }
+        } catch (priceOptionError) {
+          console.error("Error creating price options:", priceOptionError);
+          // Continue with additional images even if price option creation fails
+        }
+      }
       
+      // After product creation, upload additional images
+      if (additionalImages.length > 0) {
+        try {
+          for (const additionalImage of additionalImages) {
+            const imageUrl = await uploadProductImage(additionalImage.file, additionalImage.file.name);
+            await createProductImage({
+              product_id: newProduct.id,
+              image_url: imageUrl,
+              is_primary: additionalImage.isPrimary
+            });
+          }
+        } catch (imageError) {
+          console.error("Error creating additional images:", imageError);
+        }
+      }
+      
+      // Redirect back to admin dashboard after successful creation
+      router.push('/admin?tab=products');
     } catch (error) {
       console.error("Error creating product:", error);
       setFormError("Une erreur est survenue lors de la création du produit.");
@@ -180,7 +448,7 @@ export default function NewProduct() {
     } else if (type === 'number') {
       setTempVariant(prev => ({
         ...prev,
-        [name]: parseFloat(value) || 0
+        [name]: value === '' ? null : parseFloat(value)
       }));
     } else {
       setTempVariant(prev => ({
@@ -218,17 +486,16 @@ export default function NewProduct() {
       setTempVariants(prev => prev.map(v => ({
         ...v,
         is_default: false
-      })));
+      })) as TempVariant[]);
     }
 
     // Add new variant
-    setTempVariants(prev => [
-      ...prev,
-      {
+    const newVariant: TempVariant = {
         ...tempVariant,
         id: Date.now().toString(), // Temporary ID for tracking
-      }
-    ]);
+    };
+    
+    setTempVariants(prev => [...prev, newVariant]);
 
     // Reset the form
     setTempVariant({
@@ -249,7 +516,7 @@ export default function NewProduct() {
     setTempVariants(prev => prev.map(v => ({
       ...v,
       is_default: v.id === id
-    })));
+    })) as TempVariant[]);
   };
 
   return (
@@ -301,10 +568,22 @@ export default function NewProduct() {
                 <input
                   type="checkbox"
                   checked={useWeightPricing}
-                  onChange={(e) => setUseWeightPricing(e.target.checked)}
+                  onChange={handleWeightPricingChange}
                   className={formStyles.checkboxInput}
                 />
                 <span className={formStyles.checkboxWrapper}>Prix par gramme</span>
+              </label>
+            </div>
+            
+            <div className={formStyles.formGroup}>
+              <label className={formStyles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  checked={useDynamicPricing}
+                  onChange={handleDynamicPricingChange}
+                  className={formStyles.checkboxInput}
+                />
+                <span className={formStyles.checkboxWrapper}>Prix personnalisés</span>
               </label>
             </div>
             
@@ -321,7 +600,8 @@ export default function NewProduct() {
               </label>
             </div>
             
-            {!useWeightPricing ? (
+            {!useWeightPricing && !useDynamicPricing ? (
+              <>
               <div className={formStyles.formGroup}>
                 <label htmlFor="base_price">Prix (€) *</label>
                 <input
@@ -336,7 +616,23 @@ export default function NewProduct() {
                   placeholder="0.00"
                 />
               </div>
-            ) : (
+                
+                <div className={formStyles.formGroup}>
+                  <label htmlFor="discounted_price">Prix après réduction (€)</label>
+                  <input
+                    type="number"
+                    id="discounted_price"
+                    name="discounted_price"
+                    value={formData.discounted_price !== undefined && formData.discounted_price !== null ? formData.discounted_price : ''}
+                    onChange={handleChange}
+                    min="0"
+                    step="0.01"
+                    placeholder="0.00"
+                  />
+                  <span className={formStyles.helpText}>Laissez vide s'il n'y a pas de réduction</span>
+                </div>
+              </>
+            ) : useWeightPricing ? (
               <>
                 <div className={formStyles.formRow}>
                   <div className={formStyles.formGroup}>
@@ -347,58 +643,210 @@ export default function NewProduct() {
                       name="price_3g"
                       value={formData.price_3g || ''}
                       onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                />
-              </div>
-              
-              <div className={formStyles.formGroup}>
-                <label htmlFor="price_5g">Prix 5g (€)</label>
-                <input
-                  type="number"
-                  id="price_5g"
-                  name="price_5g"
-                  value={formData.price_5g || ''}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
-            
-            <div className={formStyles.formRow}>
-              <div className={formStyles.formGroup}>
-                <label htmlFor="price_10g">Prix 10g (€)</label>
-                <input
-                  type="number"
-                  id="price_10g"
-                  name="price_10g"
-                  value={formData.price_10g || ''}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                />
-              </div>
-              
-              <div className={formStyles.formGroup}>
-                <label htmlFor="price_20g">Prix 20g (€)</label>
-                <input
-                  type="number"
-                  id="price_20g"
-                  name="price_20g"
-                  value={formData.price_20g || ''}
-                  onChange={handleChange}
-                  min="0"
-                  step="0.01"
-                  placeholder="0.00"
-                />
-              </div>
-            </div>
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  
+                  <div className={formStyles.formGroup}>
+                    <label htmlFor="price_5g">Prix 5g (€)</label>
+                    <input
+                      type="number"
+                      id="price_5g"
+                      name="price_5g"
+                      value={formData.price_5g || ''}
+                      onChange={handleChange}
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+                
+                <div className={formStyles.formRow}>
+                  <div className={formStyles.formGroup}>
+                    <label htmlFor="price_10g">Prix 10g (€)</label>
+                    <input
+                      type="number"
+                      id="price_10g"
+                      name="price_10g"
+                      value={formData.price_10g || ''}
+                      onChange={handleChange}
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+                
+                <div className={formStyles.formRow}>
+                  <div className={formStyles.formGroup}>
+                    <label htmlFor="price_30g">Prix 30g (€)</label>
+                    <input
+                      type="number"
+                      id="price_30g"
+                      name="price_30g"
+                      value={formData.price_30g || ''}
+                      onChange={handleChange}
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+                
+                <div className={formStyles.formRow}>
+                  <div className={formStyles.formGroup}>
+                    <label htmlFor="price_50g">Prix 50g (€)</label>
+                    <input
+                      type="number"
+                      id="price_50g"
+                      name="price_50g"
+                      value={formData.price_50g || ''}
+                      onChange={handleChange}
+                      min="0"
+                      step="0.01"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+              </>
+            ) : (
+              <>
+                <div className={styles.priceOptionsContainer}>
+                  <h3>Options de prix personnalisées</h3>
+                  
+                  {/* Formulaire d'ajout d'option */}
+                  <div className={styles.priceOptionForm}>
+                    <div className={styles.priceOptionInputs}>
+                      <div className={formStyles.formGroup}>
+                        <label htmlFor="weight">Poids/Quantité</label>
+                        <input
+                          type="text"
+                          id="weight"
+                          name="weight"
+                          value={newPriceOption.weight}
+                          onChange={handlePriceOptionChange}
+                          placeholder="ex: 5g, 10ml, etc."
+                          className={formStyles.formControl}
+                        />
+                      </div>
+                      
+                      <div className={formStyles.formGroup}>
+                        <label htmlFor="price">Prix (€)</label>
+                        <input
+                          type="number"
+                          id="price"
+                          name="price"
+                          value={newPriceOption.price || ''}
+                          onChange={handlePriceOptionChange}
+                          min="0"
+                          step="0.01"
+                          placeholder="0.00"
+                          className={formStyles.formControl}
+                        />
+                      </div>
+                      
+                      <div className={formStyles.formGroup}>
+                        <label className={formStyles.checkboxLabel}>
+                          <input
+                            type="checkbox"
+                            name="is_default"
+                            checked={newPriceOption.is_default}
+                            onChange={(e) => setNewPriceOption({...newPriceOption, is_default: e.target.checked})}
+                            className={formStyles.checkboxInput}
+                          />
+                          <span className={formStyles.checkboxWrapper}>Option par défaut</span>
+                        </label>
+                      </div>
+                    </div>
+                    
+                    <button
+                      type="button"
+                      onClick={addPriceOption}
+                      className={styles.addPriceOptionBtn}
+                    >
+                      <FontAwesomeIcon icon={faPlus} /> Ajouter
+                    </button>
+                  </div>
+                  
+                  {/* Liste des options de prix */}
+                  {priceOptions.length > 0 ? (
+                    <div className={styles.priceOptionsList}>
+                      <h4>Options ajoutées:</h4>
+                      <ul>
+                        {priceOptions.map((option) => (
+                          <li key={option.id} className={styles.priceOptionItem}>
+                            <div className={styles.priceOptionInfo}>
+                              <span className={styles.priceOptionWeight}>{option.weight}</span>
+                              <span className={styles.priceOptionPrice}>{option.price.toFixed(2)}€</span>
+                              {option.is_default && (
+                                <span className={styles.defaultBadge}>Par défaut</span>
+                              )}
+                            </div>
+                            <div className={styles.priceOptionActions}>
+                              {!option.is_default && (
+                                <button
+                                  type="button"
+                                  onClick={() => setDefaultPriceOption(option.id)}
+                                  className={styles.setDefaultBtn}
+                                  title="Définir comme option par défaut"
+                                >
+                                  <FontAwesomeIcon icon={faStar} />
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => removePriceOption(option.id)}
+                                className={styles.removeOptionBtn}
+                                title="Supprimer cette option"
+                              >
+                                <FontAwesomeIcon icon={faTrash} />
+                              </button>
+                            </div>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p className={styles.noPriceOptions}>Aucune option de prix ajoutée</p>
+                  )}
+                </div>
               </>
             )}
+            
+            <div className={formStyles.formGroup}>
+              <label htmlFor="review_count">Nombre d'avis *</label>
+              <input
+                type="number"
+                id="review_count"
+                name="review_count"
+                value={formData.review_count !== undefined && formData.review_count !== null ? formData.review_count : ''}
+                onChange={handleChange}
+                min="0"
+                step="1"
+                placeholder="0"
+                required
+              />
+            </div>
+            
+            <div className={formStyles.formGroup}>
+              <label htmlFor="rating">Évaluation (étoiles) *</label>
+              <input
+                type="number"
+                id="rating"
+                name="rating"
+                value={formData.rating !== undefined && formData.rating !== null ? formData.rating : ''}
+                onChange={handleChange}
+                min="0"
+                max="5"
+                step="0.01"
+                placeholder="0.00"
+                required
+              />
+              <span className={formStyles.helpText}>Entre 0 et 5 étoiles (ex: 4.5)</span>
+            </div>
           </div>
           
           <div className={formStyles.formColumn}>
@@ -422,14 +870,13 @@ export default function NewProduct() {
             
             <div className={formStyles.formRow}>
               <div className={formStyles.formGroup}>
-                <label htmlFor="cbd_percentage">Taux de CBD (%) *</label>
+                <label htmlFor="cbd_percentage">Taux de CBD (%)</label>
                 <input
                   type="number"
                   id="cbd_percentage"
                   name="cbd_percentage"
-                  value={formData.cbd_percentage || ''}
+                  value={formData.cbd_percentage !== undefined && formData.cbd_percentage !== null ? formData.cbd_percentage : ''}
                   onChange={handleChange}
-                  required
                   min="0"
                   max="100"
                   step="0.1"
@@ -438,14 +885,14 @@ export default function NewProduct() {
               </div>
               
               <div className={formStyles.formGroup}>
-                <label htmlFor="culture_type">Type de culture *</label>
+                <label htmlFor="culture_type">Type de culture</label>
                 <select
                   id="culture_type"
                   name="culture_type"
                   value={formData.culture_type}
                   onChange={handleChange}
-                  required
                 >
+                  <option value="none">Aucun</option>
                   <option value="indoor">Indoor</option>
                   <option value="outdoor">Outdoor</option>
                 </select>
@@ -453,14 +900,13 @@ export default function NewProduct() {
             </div>
             
             <div className={formStyles.formGroup}>
-              <label htmlFor="origin">Origine *</label>
+              <label htmlFor="origin">Origine</label>
               <input
                 type="text"
                 id="origin"
                 name="origin"
                 value={formData.origin}
                 onChange={handleChange}
-                required
                 placeholder="ex: Suisse"
               />
             </div>
@@ -494,13 +940,71 @@ export default function NewProduct() {
                   className={formStyles.fileInput}
                 />
                 <label htmlFor="image" className={formStyles.fileButton}>
-                  <FontAwesomeIcon icon={faUpload} /> Choisir une image
+                  <FontAwesomeIcon icon={faUpload} /> Choisir l'image principale
                 </label>
                 {imagePreview && (
                   <div className={formStyles.imagePreview}>
                     <img src={imagePreview} alt="Aperçu" />
                   </div>
                 )}
+              </div>
+            </div>
+            
+            {/* Additional Images Section */}
+            <div className={formStyles.formGroup}>
+              <label>Images supplémentaires</label>
+              <div className={styles.additionalImagesContainer}>
+                {additionalImages.length > 0 && (
+                  <div className={styles.imagesGrid}>
+                    {additionalImages.map(img => (
+                      <div key={img.id} className={`${styles.imageItem} ${img.isPrimary ? styles.primaryImage : ''}`}>
+                        <div className={styles.imageContainer}>
+                          <img 
+                            src={img.preview} 
+                            alt="Image produit" 
+                            className={styles.productImage}
+                          />
+                          {img.isPrimary && (
+                            <span className={styles.primaryBadge}>
+                              <FontAwesomeIcon icon={faStar} /> Principal
+                            </span>
+                          )}
+                        </div>
+                        <div className={styles.imageActions}>
+                          {!img.isPrimary && (
+                            <button 
+                              type="button" 
+                              onClick={() => handleSetPrimaryImage(img.id)}
+                              className={styles.btnSetPrimary}
+                            >
+                              <FontAwesomeIcon icon={faStar} /> Définir comme principale
+                            </button>
+                          )}
+                          <button 
+                            type="button" 
+                            onClick={() => handleRemoveAdditionalImage(img.id)}
+                            className={styles.btnDelete}
+                          >
+                            <FontAwesomeIcon icon={faTrash} /> Supprimer
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
+                <div className={styles.addImageContainer}>
+                  <input
+                    type="file"
+                    id="additional-image"
+                    accept="image/*"
+                    onChange={handleAdditionalImageChange}
+                    className={styles.fileInput}
+                  />
+                  <label htmlFor="additional-image" className={styles.uploadLabel}>
+                    <FontAwesomeIcon icon={faUpload} /> Ajouter une image supplémentaire
+                  </label>
+                </div>
               </div>
             </div>
           </div>
@@ -540,7 +1044,7 @@ export default function NewProduct() {
                     )}
                     <div className={styles.variantInfo}>
                       <h4>{variant.color_name}</h4>
-                      <p>Ajustement de prix: {variant.price_adjustment > 0 ? '+' : ''}{variant.price_adjustment} €</p>
+                      <p>Ajustement de prix: {variant.price_adjustment !== null ? (variant.price_adjustment > 0 ? '+' : '') + variant.price_adjustment : '0'} €</p>
                       {variant.is_default && (
                         <span className={styles.defaultBadge}>
                           <FontAwesomeIcon icon={faStar} /> Par défaut
@@ -592,7 +1096,7 @@ export default function NewProduct() {
                     type="number"
                     id="price_adjustment"
                     name="price_adjustment"
-                    value={tempVariant.price_adjustment}
+                    value={tempVariant.price_adjustment !== undefined && tempVariant.price_adjustment !== null ? tempVariant.price_adjustment : ''}
                     onChange={handleTempVariantChange}
                     step="0.01"
                     placeholder="0.00"

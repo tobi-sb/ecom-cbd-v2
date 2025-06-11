@@ -1,5 +1,5 @@
 import { supabase } from '@/lib/supabase';
-import { Product, ProductWithPrices, Category, ColorVariant } from '@/types/database.types';
+import { Product, ProductWithPrices, Category, ColorVariant, ProductImage, PriceOption } from '@/types/database.types';
 
 /**
  * Fetch all products from Supabase
@@ -74,33 +74,53 @@ export const getProductsByCategory = async (categorySlug: string): Promise<Produ
  * Format product with weight options
  */
 export const formatProductWithPrices = (product: Product): ProductWithPrices => {
+  // Si le produit a des options de prix personnalisées, les utiliser
+  if (product.price_options && product.price_options.length > 0) {
+    const weightOptions = product.price_options.map(option => ({
+      weight: option.weight,
+      price: option.price,
+      discounted_price: product.discounted_price || undefined
+    }));
+
+    return {
+      ...product,
+      weightOptions
+    };
+  }
+  
   // Check if product uses weight-based pricing
   const hasWeightPricing = product.price_3g > 0 || product.price_5g > 0 || 
-                          product.price_10g > 0 || product.price_20g > 0;
+                          product.price_10g > 0 || 
+                          product.price_30g > 0 || product.price_50g > 0;
   
   if (hasWeightPricing) {
     // If product has weight-based pricing, use those options
-  const weightOptions = [
-    { weight: '3g', price: product.price_3g },
-    { weight: '5g', price: product.price_5g },
-    { weight: '10g', price: product.price_10g },
-    { weight: '20g', price: product.price_20g }
-  ].filter(option => option.price > 0);
+    const weightOptions = [
+      { weight: '3g', price: product.price_3g, discounted_price: product.discounted_price || undefined },
+      { weight: '5g', price: product.price_5g, discounted_price: product.discounted_price || undefined },
+      { weight: '10g', price: product.price_10g, discounted_price: product.discounted_price || undefined },
+      { weight: '30g', price: product.price_30g, discounted_price: product.discounted_price || undefined },
+      { weight: '50g', price: product.price_50g, discounted_price: product.discounted_price || undefined }
+    ].filter(option => option.price > 0);
 
     // If no weight options are available despite being weight-based, set a default price option
     if (weightOptions.length === 0) {
-      weightOptions.push({ weight: 'default', price: 0 });
+      weightOptions.push({ weight: 'default', price: 0, discounted_price: undefined });
     }
 
-  return {
-    ...product,
-    weightOptions
-  };
+    return {
+      ...product,
+      weightOptions
+    };
   } else {
     // If product has a base price, use that as the single option
     return {
       ...product,
-      weightOptions: [{ weight: 'default', price: product.base_price || 0 }]
+      weightOptions: [{ 
+        weight: 'default', 
+        price: product.base_price || 0,
+        discounted_price: product.discounted_price || undefined
+      }]
     };
   }
 };
@@ -115,7 +135,16 @@ export const getDetailedProduct = async (id: string): Promise<ProductWithPrices 
     return null;
   }
 
-  return formatProductWithPrices(product);
+  // Récupérer les options de prix personnalisées si elles existent
+  const priceOptions = await getProductPriceOptions(id);
+  
+  // Ajouter les options de prix au produit
+  const productWithOptions = {
+    ...product,
+    price_options: priceOptions
+  };
+
+  return formatProductWithPrices(productWithOptions);
 };
 
 /**
@@ -154,12 +183,18 @@ export const getCategoryBySlug = async (slug: string): Promise<Category | null> 
 };
 
 /**
- * Create a new product in Supabase
+ * Create a new product
  */
 export const createProduct = async (productData: Partial<Product>): Promise<Product> => {
+  // Ensure price_20g has a default value to satisfy NOT NULL constraint
+  const dataWithDefaults = {
+    ...productData,
+    price_20g: 0  // Valeur par défaut pour satisfaire la contrainte NOT NULL
+  };
+
   const { data, error } = await supabase
     .from('products')
-    .insert([productData])
+    .insert([dataWithDefaults])
     .select()
     .single();
 
@@ -172,12 +207,16 @@ export const createProduct = async (productData: Partial<Product>): Promise<Prod
 };
 
 /**
- * Update an existing product in Supabase
+ * Update a product
  */
 export const updateProduct = async (id: string, productData: Partial<Product>): Promise<Product> => {
+  // Supprimer les propriétés qui ne sont pas des colonnes dans la table products
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { categories, color_variants, product_images, price_options, ...dataToUpdate } = productData;
+
   const { data, error } = await supabase
     .from('products')
-    .update(productData)
+    .update(dataToUpdate)
     .eq('id', id)
     .select()
     .single();
@@ -468,4 +507,256 @@ export const uploadColorVariantImage = async (file: File, fileName: string): Pro
     .getPublicUrl(filePath);
 
   return urlData.publicUrl;
+};
+
+/**
+ * Get all images for a product
+ */
+export const getProductImages = async (productId: string): Promise<ProductImage[]> => {
+  const { data, error } = await supabase
+    .from('product_images')
+    .select('*')
+    .eq('product_id', productId)
+    .order('is_primary', { ascending: false })
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error(`Error fetching images for product ${productId}:`, error);
+    return [];
+  }
+
+  return data || [];
+};
+
+/**
+ * Create a new product image
+ */
+export const createProductImage = async (imageData: Omit<ProductImage, 'id' | 'created_at' | 'updated_at'>): Promise<ProductImage> => {
+  // If this is the first image or marked as primary, ensure it's the only primary image
+  if (imageData.is_primary) {
+    // First, set all existing images for this product to non-primary
+    await supabase
+      .from('product_images')
+      .update({ is_primary: false })
+      .eq('product_id', imageData.product_id);
+  }
+
+  const { data, error } = await supabase
+    .from('product_images')
+    .insert([imageData])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating product image:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+/**
+ * Update a product image
+ */
+export const updateProductImage = async (id: string, imageData: Partial<ProductImage>): Promise<ProductImage> => {
+  // If setting this image as primary, ensure it's the only primary image
+  if (imageData.is_primary) {
+    // Get the image to find its product_id
+    const { data: existingImage } = await supabase
+      .from('product_images')
+      .select('product_id')
+      .eq('id', id)
+      .single();
+    
+    if (existingImage) {
+      // Set all images for this product to non-primary
+      await supabase
+        .from('product_images')
+        .update({ is_primary: false })
+        .eq('product_id', existingImage.product_id);
+    }
+  }
+
+  const { data, error } = await supabase
+    .from('product_images')
+    .update(imageData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`Error updating product image with id ${id}:`, error);
+    throw error;
+  }
+
+  return data;
+};
+
+/**
+ * Delete a product image
+ */
+export const deleteProductImage = async (id: string): Promise<void> => {
+  // Check if this is a primary image before deleting
+  const { data: imageToDelete } = await supabase
+    .from('product_images')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  const { error } = await supabase
+    .from('product_images')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error(`Error deleting product image with id ${id}:`, error);
+    throw error;
+  }
+
+  // If this was a primary image, set another image as primary if available
+  if (imageToDelete && imageToDelete.is_primary) {
+    const { data: remainingImages } = await supabase
+      .from('product_images')
+      .select('id')
+      .eq('product_id', imageToDelete.product_id)
+      .order('created_at', { ascending: true })
+      .limit(1);
+    
+    if (remainingImages && remainingImages.length > 0) {
+      await supabase
+        .from('product_images')
+        .update({ is_primary: true })
+        .eq('id', remainingImages[0].id);
+    }
+  }
+};
+
+/**
+ * Set a product image as the primary image
+ */
+export const setProductPrimaryImage = async (id: string): Promise<void> => {
+  // Get the image to find its product_id
+  const { data: imageToUpdate } = await supabase
+    .from('product_images')
+    .select('product_id')
+    .eq('id', id)
+    .single();
+  
+  if (!imageToUpdate) {
+    throw new Error('Image not found');
+  }
+
+  // First, set all images for this product to non-primary
+  await supabase
+    .from('product_images')
+    .update({ is_primary: false })
+    .eq('product_id', imageToUpdate.product_id);
+  
+  // Then set this image as primary
+  const { error } = await supabase
+    .from('product_images')
+    .update({ is_primary: true })
+    .eq('id', id);
+
+  if (error) {
+    console.error(`Error setting product image ${id} as primary:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Get price options for a product
+ */
+export const getProductPriceOptions = async (productId: string): Promise<PriceOption[]> => {
+  const { data, error } = await supabase
+    .from('product_price_options')
+    .select('*')
+    .eq('product_id', productId)
+    .order('created_at', { ascending: true });
+
+  if (error) {
+    console.error(`Error fetching price options for product ${productId}:`, error);
+    return [];
+  }
+
+  return data || [];
+};
+
+/**
+ * Create a new price option
+ */
+export const createPriceOption = async (optionData: Omit<PriceOption, 'id' | 'created_at' | 'updated_at'>): Promise<PriceOption> => {
+  const { data, error } = await supabase
+    .from('product_price_options')
+    .insert([optionData])
+    .select()
+    .single();
+
+  if (error) {
+    console.error('Error creating price option:', error);
+    throw error;
+  }
+
+  return data;
+};
+
+/**
+ * Update a price option
+ */
+export const updatePriceOption = async (id: string, optionData: Partial<PriceOption>): Promise<PriceOption> => {
+  const { data, error } = await supabase
+    .from('product_price_options')
+    .update(optionData)
+    .eq('id', id)
+    .select()
+    .single();
+
+  if (error) {
+    console.error(`Error updating price option with id ${id}:`, error);
+    throw error;
+  }
+
+  return data;
+};
+
+/**
+ * Delete a price option
+ */
+export const deletePriceOption = async (id: string): Promise<void> => {
+  const { error } = await supabase
+    .from('product_price_options')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    console.error(`Error deleting price option with id ${id}:`, error);
+    throw error;
+  }
+};
+
+/**
+ * Set a price option as default
+ */
+export const setDefaultPriceOption = async (productId: string, optionId: string): Promise<void> => {
+  // First, unset any existing default option
+  const { error: updateError } = await supabase
+    .from('product_price_options')
+    .update({ is_default: false })
+    .eq('product_id', productId);
+  
+  if (updateError) {
+    console.error(`Error updating price options for product ${productId}:`, updateError);
+    throw updateError;
+  }
+  
+  // Then, set the new default option
+  const { error } = await supabase
+    .from('product_price_options')
+    .update({ is_default: true })
+    .eq('id', optionId);
+  
+  if (error) {
+    console.error(`Error setting default price option ${optionId}:`, error);
+    throw error;
+  }
 }; 

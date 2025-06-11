@@ -19,6 +19,25 @@ export interface ColorVariant {
   updated_at?: string;
 }
 
+export interface ProductImage {
+  id: string;
+  product_id: string;
+  image_url: string;
+  is_primary: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
+export interface PriceOption {
+  id: string;
+  product_id: string;
+  price: number;
+  weight: string;
+  is_default: boolean;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -26,19 +45,25 @@ export interface Product {
   price_3g: number;
   price_5g: number;
   price_10g: number;
-  price_20g: number;
+  price_30g: number;
+  price_50g: number;
   base_price: number;
-  cbd_percentage: number;
-  culture_type: 'indoor' | 'outdoor';
-  origin: string;
+  discounted_price?: number | null;
+  cbd_percentage?: number | null;
+  culture_type: 'indoor' | 'outdoor' | 'none';
+  origin?: string;
   created_at?: string;
   image_url?: string;
   category?: string;
   category_id?: string;
   tag?: string;
   is_featured?: boolean;
+  review_count?: number;
+  rating?: number;
   categories?: Category;
   color_variants?: ColorVariant[];
+  product_images?: ProductImage[];
+  price_options?: PriceOption[];
 }
 
 export interface ProductWithCategory extends Product {
