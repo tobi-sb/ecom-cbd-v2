@@ -9,31 +9,33 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 function getValidImageUrl(imageUrl: string | undefined, origin: string | null): string[] {
   if (!imageUrl) return [];
   
-  try {
-    // If the image URL is already absolute (with http or https), use it as is
-    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+  // If the image URL is already absolute (with http or https), use it as is
+  if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+    try {
       // Check if it's a valid URL by attempting to create a URL object
       new URL(imageUrl);
       return [imageUrl];
+    } catch {
+      // Invalid URL
+      return [];
     }
-    
-    // If it's a relative URL starting with '/', prepend the origin
-    if (imageUrl.startsWith('/') && origin) {
-      try {
-        const fullUrl = `${origin}${imageUrl}`;
-        new URL(fullUrl); // Validate it's a proper URL
-        return [fullUrl];
-      } catch (_) {
-        return []; // Invalid URL, return empty array
-      }
-    }
-    
-    // Not a valid URL format we can handle
-    return [];
-  } catch (_) {
-    console.error("Invalid image URL:", imageUrl);
-    return []; // Return empty array for any errors
   }
+  
+  // If it's a relative URL starting with '/' and we have an origin
+  if (imageUrl.startsWith('/') && origin) {
+    try {
+      const fullUrl = `${origin}${imageUrl}`;
+      new URL(fullUrl); // Validate it's a proper URL
+      return [fullUrl];
+    } catch {
+      // Invalid URL
+      return [];
+    }
+  }
+  
+  // Not a valid URL format we can handle
+  console.error("Invalid image URL format:", imageUrl);
+  return [];
 }
 
 export async function POST(request: Request) {
@@ -92,7 +94,7 @@ export async function POST(request: Request) {
     };
     
     // Calculate subtotal
-    const subtotal = items.reduce((acc: number, item: any) => acc + (item.price * item.quantity), 0);
+    const subtotal = items.reduce((acc: number, item: { price: number; quantity: number }) => acc + (item.price * item.quantity), 0);
     const shippingCost = subtotal >= 80 ? 0 : shippingCosts[shippingMethod as keyof typeof shippingCosts] || shippingCosts.point_relais_48h;
 
     // Add shipping as a line item only if not free
@@ -167,10 +169,11 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json({ sessionId: session.id, url: session.url });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     console.error('Error creating checkout session:', error);
     return NextResponse.json(
-      { error: 'Erreur lors de la création de la session de paiement: ' + error.message },
+      { error: 'Erreur lors de la création de la session de paiement: ' + errorMessage },
       { status: 500 }
     );
   }

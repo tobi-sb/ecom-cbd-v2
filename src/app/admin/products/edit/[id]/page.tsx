@@ -9,7 +9,7 @@ import styles from '../../../admin.module.css';
 import formStyles from '../../new/form.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faSave, faUpload, faTrash, faStar, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { getProductById, updateProduct, getAllCategories, uploadProductImage, getProductColorVariants, createProductImage, deleteProductImage, setProductPrimaryImage, getProductImages, updateProductImage, getProductPriceOptions, createPriceOption, deletePriceOption, setDefaultPriceOption } from '@/services/product.service';
+import { getProductById, updateProduct, getAllCategories, uploadProductImage, getProductColorVariants, createProductImage, deleteProductImage, setProductPrimaryImage, getProductImages, getProductPriceOptions, createPriceOption, deletePriceOption, setDefaultPriceOption } from '@/services/product.service';
 import { Product, Category, ColorVariant, ProductImage, PriceOption } from '@/types/database.types';
 import ColorVariantsManager from '../../../components/ColorVariantsManager';
 

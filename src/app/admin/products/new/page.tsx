@@ -13,6 +13,7 @@ import { Category, ColorVariant } from '@/types/database.types';
 import { uploadProductImage, createColorVariant, createProductImage, createPriceOption } from '@/services/product.service';
 import { Product } from '@/types/database.types';
 import ColorVariantsManager from '../../components/ColorVariantsManager';
+import Image from 'next/image';
 
 export default function NewProduct() {
   const router = useRouter();
@@ -944,7 +945,13 @@ export default function NewProduct() {
                 </label>
                 {imagePreview && (
                   <div className={formStyles.imagePreview}>
-                    <img src={imagePreview} alt="Aperçu" />
+                    <Image 
+                      src={imagePreview} 
+                      alt="Aperçu" 
+                      width={150}
+                      height={150}
+                      style={{ objectFit: 'contain' }}
+                    />
                   </div>
                 )}
               </div>
@@ -959,10 +966,13 @@ export default function NewProduct() {
                     {additionalImages.map(img => (
                       <div key={img.id} className={`${styles.imageItem} ${img.isPrimary ? styles.primaryImage : ''}`}>
                         <div className={styles.imageContainer}>
-                          <img 
+                          <Image 
                             src={img.preview} 
                             alt="Image produit" 
                             className={styles.productImage}
+                            width={100}
+                            height={100}
+                            style={{ objectFit: 'cover' }}
                           />
                           {img.isPrimary && (
                             <span className={styles.primaryBadge}>
@@ -1036,10 +1046,13 @@ export default function NewProduct() {
                 {tempVariants.map(variant => (
                   <div key={variant.id} className={styles.variantItem}>
                     {variant.temp_image_preview && (
-                      <img 
+                      <Image 
                         src={variant.temp_image_preview} 
                         alt={variant.color_name} 
                         className={styles.variantImage}
+                        width={80}
+                        height={80}
+                        style={{ objectFit: 'cover' }}
                       />
                     )}
                     <div className={styles.variantInfo}>
