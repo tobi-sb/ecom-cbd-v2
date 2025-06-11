@@ -381,22 +381,6 @@ export default function EditProduct() {
       setFormError('Erreur lors de la suppression de l\'image. Veuillez réessayer.');
     }
   };
-  
-  // Fonction auxiliaire pour mettre à jour l'image principale
-  const updateProductPrimaryImage = async (imageId: string, newImageUrl: string) => {
-    try {
-      // D'abord, mettre à jour l'entrée dans product_images
-      await updateProductImage(imageId, { image_url: newImageUrl, is_primary: true });
-      
-      // Mettre à jour l'état local
-      setProductImages(productImages.map(img => 
-        img.id === imageId ? { ...img, image_url: newImageUrl, is_primary: true } : img
-      ));
-    } catch (error) {
-      console.error('Error updating primary image:', error);
-      throw error;
-    }
-  };
 
   if (isLoading) {
     return (
@@ -486,7 +470,7 @@ export default function EditProduct() {
                   onChange={(e) => setFormData({...formData, is_featured: e.target.checked})}
                   className={formStyles.checkboxInput}
                 />
-                <span className={formStyles.checkboxWrapper}>Afficher dans le slider "Nos Produits Phares"</span>
+                <span className={formStyles.checkboxWrapper}>Afficher dans le slider &quot;Nos Produits Phares&quot;</span>
               </label>
             </div>
             
@@ -519,7 +503,7 @@ export default function EditProduct() {
                     step="0.01"
                     placeholder="0.00"
                   />
-                  <span className={formStyles.helpText}>Laissez vide s'il n'y a pas de réduction</span>
+                  <span className={formStyles.helpText}>Laissez vide s&apos;il n&apos;y a pas de réduction</span>
                 </div>
               </>
             ) : useWeightPricing ? (
@@ -707,7 +691,7 @@ export default function EditProduct() {
             )}
             
             <div className={formStyles.formGroup}>
-              <label htmlFor="review_count">Nombre d'avis *</label>
+              <label htmlFor="review_count">Nombre d&apos;avis *</label>
               <input
                 type="number"
                 id="review_count"
@@ -844,7 +828,7 @@ export default function EditProduct() {
                   className={formStyles.fileInput}
                 />
                 <label htmlFor="image" className={formStyles.fileButton}>
-                  <FontAwesomeIcon icon={faUpload} /> {imagePreview ? 'Changer l\'image principale' : 'Choisir l\'image principale'}
+                  <FontAwesomeIcon icon={faUpload} /> {imagePreview ? 'Changer l&apos;image principale' : 'Choisir l&apos;image principale'}
                 </label>
               </div>
             </div>
