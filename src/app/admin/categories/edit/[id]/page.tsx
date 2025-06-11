@@ -232,7 +232,7 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
         router.push('/admin?tab=categories');
       }, 2000);
       
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Error updating category:', error);
       
       // Handle specific error cases
@@ -303,7 +303,7 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
       setTimeout(() => {
         router.push('/admin?tab=categories');
       }, 2000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting category:', err);
       
       // Improved error handling
@@ -355,7 +355,7 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
         <div className={styles.modalOverlay}>
           <div className={styles.modal}>
             <h3>Réassigner les produits</h3>
-            <p>Cette catégorie contient {categoryProducts.length} produits. Pour la supprimer, vous devez d'abord réassigner ces produits à une autre catégorie.</p>
+            <p>Cette catégorie contient {categoryProducts.length} produits. Pour la supprimer, vous devez d&apos;abord réassigner ces produits à une autre catégorie.</p>
             
             <div style={{ margin: '20px 0' }}>
               <label htmlFor="targetCategory" style={{ display: 'block', marginBottom: '10px', fontWeight: 'bold' }}>
@@ -419,7 +419,7 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
             {hasProducts && (
               <p style={{ color: 'red', fontWeight: 'bold' }}>
                 Cette catégorie contient des produits et ne peut pas être supprimée.
-                Veuillez d'abord supprimer ou réassigner tous les produits de cette catégorie.
+                Veuillez d&apos;abord supprimer ou réassigner tous les produits de cette catégorie.
               </p>
             )}
             <div className={styles.modalActions}>
@@ -539,7 +539,7 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
               </div>
 
               <div className={styles.formField}>
-                <label htmlFor="order">Ordre d'affichage</label>
+                <label htmlFor="order">Ordre d&apos;affichage</label>
                 <input
                   type="number"
                   id="order"
@@ -552,7 +552,7 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
                 {validationErrors.order && (
                   <span className={styles.errorText}>{validationErrors.order}</span>
                 )}
-                <small>Ordre d'affichage (0 = premier)</small>
+                <small>Ordre d&apos;affichage (0 = premier)</small>
               </div>
 
               <div className={styles.formField}>
