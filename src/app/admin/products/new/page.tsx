@@ -9,7 +9,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faSave, faUpload, faPlus, faTrash, faStar } from '@fortawesome/free-solid-svg-icons';
 import { createProduct } from '@/services/product.service';
 import { getAllCategories } from '@/services/product.service';
-import { Category, ColorVariant, PriceOption } from '@/types/database.types';
+import { Category, ColorVariant } from '@/types/database.types';
 import { uploadProductImage, createColorVariant, createProductImage, createPriceOption } from '@/services/product.service';
 import { Product } from '@/types/database.types';
 import ColorVariantsManager from '../../components/ColorVariantsManager';
@@ -596,7 +596,7 @@ export default function NewProduct() {
                   onChange={(e) => setFormData({...formData, is_featured: e.target.checked})}
                   className={formStyles.checkboxInput}
                 />
-                <span className={formStyles.checkboxWrapper}>Afficher dans le slider "Nos Produits Phares"</span>
+                <span className={formStyles.checkboxWrapper}>Afficher dans le slider &quot;Nos Produits Phares&quot;</span>
               </label>
             </div>
             
@@ -629,7 +629,7 @@ export default function NewProduct() {
                     step="0.01"
                     placeholder="0.00"
                   />
-                  <span className={formStyles.helpText}>Laissez vide s'il n'y a pas de réduction</span>
+                  <span className={formStyles.helpText}>Laissez vide s&apos;il n&apos;y a pas de réduction</span>
                 </div>
               </>
             ) : useWeightPricing ? (
@@ -817,7 +817,7 @@ export default function NewProduct() {
             )}
             
             <div className={formStyles.formGroup}>
-              <label htmlFor="review_count">Nombre d'avis *</label>
+              <label htmlFor="review_count">Nombre d&apos;avis *</label>
               <input
                 type="number"
                 id="review_count"
@@ -940,7 +940,7 @@ export default function NewProduct() {
                   className={formStyles.fileInput}
                 />
                 <label htmlFor="image" className={formStyles.fileButton}>
-                  <FontAwesomeIcon icon={faUpload} /> Choisir l'image principale
+                  <FontAwesomeIcon icon={faUpload} /> Choisir l&apos;image principale
                 </label>
                 {imagePreview && (
                   <div className={formStyles.imagePreview}>
@@ -1114,7 +1114,7 @@ export default function NewProduct() {
                       className={styles.fileInput}
                     />
                     <label htmlFor="variant_image" className={styles.fileButton}>
-                      <FontAwesomeIcon icon={faUpload} /> {tempVariant.image_file ? 'Changer l\'image' : 'Ajouter une image'}
+                      <FontAwesomeIcon icon={faUpload} /> {tempVariant.image_file ? "Changer l&apos;image" : "Ajouter une image"}
                     </label>
                     {tempVariant.image_file && (
                       <span className={styles.fileName}>{tempVariant.image_file.name}</span>
@@ -1174,7 +1174,7 @@ export default function NewProduct() {
               className={formStyles.btnSubmit}
               disabled={isLoading}
             >
-              <FontAwesomeIcon icon={faSave} /> {isLoading ? 'Enregistrement...' : 'Enregistrer le produit'}
+              <FontAwesomeIcon icon={faSave} /> {isLoading ? "Enregistrement..." : "Enregistrer le produit"}
             </button>
           )}
         </div>
