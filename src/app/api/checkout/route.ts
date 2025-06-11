@@ -2,10 +2,8 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { supabase } from '@/lib/supabase';
 
-// Initialize Stripe with the secret key
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RIzYF60Rzh3ncZFQo1efXrqL9WVky6WLqCThAYQnxtopgu9O7OCywKKGjldaUiv0tjNtsN0LVSZdnDraxlBvvA500EJq1z2fZ', {
-  apiVersion: '2023-10-16' as any,
-});
+// Initialize Stripe with the secret key from environment variables
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
 
 // Helper function to validate and format image URLs
 function getValidImageUrl(imageUrl: string | undefined, origin: string | null): string[] {
@@ -25,14 +23,14 @@ function getValidImageUrl(imageUrl: string | undefined, origin: string | null): 
         const fullUrl = `${origin}${imageUrl}`;
         new URL(fullUrl); // Validate it's a proper URL
         return [fullUrl];
-      } catch (e) {
+      } catch (_) {
         return []; // Invalid URL, return empty array
       }
     }
     
     // Not a valid URL format we can handle
     return [];
-  } catch (e) {
+  } catch (_) {
     console.error("Invalid image URL:", imageUrl);
     return []; // Return empty array for any errors
   }
@@ -63,7 +61,7 @@ export async function POST(request: Request) {
     }
 
     // Create line items for Stripe
-    const lineItems = items.map((item: any) => {
+    const lineItems = items.map((item: { name: string; description?: string; image?: string; price: number; quantity: number }) => {
       // Create the base product data
       const productData: Stripe.Checkout.SessionCreateParams.LineItem.PriceData.ProductData = {
         name: item.name,
