@@ -1,8 +1,10 @@
+'use client';
+
 import { useState, useEffect } from 'react';
-import { supabase } from '@/lib/supabase';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faPlus, faTrash, faEdit, faSave } from '@fortawesome/free-solid-svg-icons';
+import { faPlus, faEdit, faTrash, faSave } from '@fortawesome/free-solid-svg-icons';
 import styles from '../admin.module.css';
+import { supabase } from '@/lib/supabase';
 
 interface PromoCode {
   id: string;
@@ -15,11 +17,18 @@ interface PromoCode {
   expires_at: string | null;
 }
 
+// Define error type to replace 'any'
+interface SupabaseError {
+  message: string;
+  code?: string;
+  details?: string;
+}
+
 export default function PromoCodesTab() {
   const [promoCodes, setPromoCodes] = useState<PromoCode[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
-  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [editingPromo, setEditingPromo] = useState<PromoCode | null>(null);
   const [formData, setFormData] = useState({
     code: '',
@@ -35,8 +44,8 @@ export default function PromoCodesTab() {
   }, []);
 
   const fetchPromoCodes = async () => {
+    setIsLoading(true);
     try {
-      setIsLoading(true);
       const { data, error } = await supabase
         .from('promo_codes')
         .select('*')
@@ -44,9 +53,10 @@ export default function PromoCodesTab() {
 
       if (error) throw error;
       setPromoCodes(data || []);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error fetching promo codes:', err);
-      setError(err.message);
+      const supabaseError = err as SupabaseError;
+      setError(supabaseError.message);
     } finally {
       setIsLoading(false);
     }
@@ -87,9 +97,10 @@ export default function PromoCodesTab() {
       await fetchPromoCodes();
       setIsModalOpen(false);
       resetForm();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error saving promo code:', err);
-      setError(err.message);
+      const supabaseError = err as SupabaseError;
+      setError(supabaseError.message);
     }
   };
 
@@ -117,9 +128,10 @@ export default function PromoCodesTab() {
 
       if (error) throw error;
       await fetchPromoCodes();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error deleting promo code:', err);
-      setError(err.message);
+      const supabaseError = err as SupabaseError;
+      setError(supabaseError.message);
     }
   };
 
@@ -265,7 +277,7 @@ export default function PromoCodesTab() {
               </div>
 
               <div className={styles.formGroup}>
-                <label htmlFor="expires_at">Date d'expiration</label>
+                <label htmlFor="expires_at">Date d&apos;expiration</label>
                 <input
                   type="date"
                   id="expires_at"
