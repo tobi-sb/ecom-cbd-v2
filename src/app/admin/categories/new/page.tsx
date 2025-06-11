@@ -150,7 +150,7 @@ export default function NewCategoryPage() {
 
           <div className={styles.formRow}>
             <div className={styles.formField}>
-              <label htmlFor="order">Ordre d'affichage</label>
+              <label htmlFor="order">Ordre d&apos;affichage</label>
               <input
                 type="number"
                 id="order"
@@ -159,7 +159,7 @@ export default function NewCategoryPage() {
                 onChange={handleInputChange}
                 placeholder="0"
               />
-              <small>Ordre d'affichage (0 = premier)</small>
+              <small>Ordre d&apos;affichage (0 = premier)</small>
             </div>
           </div>
 

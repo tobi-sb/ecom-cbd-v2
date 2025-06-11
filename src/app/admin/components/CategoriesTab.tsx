@@ -8,6 +8,12 @@ import { getAllProducts, getAllCategories, deleteCategory } from '@/services/pro
 import { Product, Category } from '@/types/database.types';
 import styles from '../admin.module.css';
 
+// Define proper error type to use instead of 'any'
+interface CategoryError {
+  code?: string;
+  message?: string;
+}
+
 export default function CategoriesTab() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
@@ -55,13 +61,16 @@ export default function CategoriesTab() {
       setCategories(categories.filter(category => category.id !== categoryToDelete));
       setDeleteModalOpen(false);
       setCategoryToDelete(null);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Failed to delete category:", err);
+      // Type guard to safely access potential error properties
+      const categoryError = err as CategoryError;
+      
       // Handle specific error for categories with products
-      if (err.code === 'CATEGORY_HAS_PRODUCTS') {
-        setError(err.message);
-      } else if (err.code === '23503') { // Foreign key constraint error from database
-        setError('Cette catégorie a des produits associés. Veuillez d\'abord supprimer ou réassigner ces produits.');
+      if (categoryError.code === 'CATEGORY_HAS_PRODUCTS') {
+        setError(categoryError.message || 'Une erreur est survenue');
+      } else if (categoryError.code === '23503') { // Foreign key constraint error from database
+        setError('Cette catégorie a des produits associés. Veuillez d&apos;abord supprimer ou réassigner ces produits.');
       } else {
         setError('Une erreur est survenue lors de la suppression de la catégorie.');
       }
@@ -75,7 +84,7 @@ export default function CategoriesTab() {
           <div className={styles.modal}>
             <h3>Confirmer la suppression</h3>
             <p>Êtes-vous sûr de vouloir supprimer cette catégorie? Cette action est irréversible.</p>
-            <p>Note: Les produits associés à cette catégorie ne seront pas supprimés, mais ils n'auront plus de catégorie.</p>
+            <p>Note: Les produits associés à cette catégorie ne seront pas supprimés, mais ils n&apos;auront plus de catégorie.</p>
             
             {/* Display error message if there is one */}
             {error && (
@@ -147,8 +156,8 @@ export default function CategoriesTab() {
                     <button 
                       className={styles.btnDelete}
                       onClick={() => handleDeleteClick(category.id)}
-                      disabled={getProductCount(category.id) > 0} // Disable delete button if category has products
-                      title={getProductCount(category.id) > 0 ? 'Cette catégorie contient des produits et ne peut pas être supprimée' : 'Supprimer la catégorie'}
+                      disabled={getProductCount(category.id) > 0}
+                      title={getProductCount(category.id) > 0 ? "Cette catégorie contient des produits et ne peut pas être supprimée" : "Supprimer la catégorie"}
                     >
                       <FontAwesomeIcon icon={faTrash} /> Supprimer
                     </button>
