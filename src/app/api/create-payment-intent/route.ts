@@ -6,6 +6,15 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
   apiVersion: '2025-04-30.basil',
 });
 
+// Define proper types for the item
+interface CartItem {
+  id: string;
+  name: string;
+  quantity: number;
+  price: number;
+  [key: string]: unknown; // Allow additional properties
+}
+
 export async function POST(request: Request) {
   try {
     // Log the request headers for debugging
@@ -26,7 +35,7 @@ export async function POST(request: Request) {
     }
 
     // Create a simplified items summary for metadata
-    const itemsSummary = items.map((item: any) => ({
+    const itemsSummary = items.map((item: CartItem) => ({
       id: item.id,
       name: item.name,
       quantity: item.quantity,
@@ -71,20 +80,27 @@ export async function POST(request: Request) {
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
     });
-  } catch (error: any) {
+  } catch (error: unknown) {
+    const stripeError = error as {
+      message: string;
+      type?: string;
+      code?: string;
+      stack?: string;
+    };
+
     console.error('Error creating payment intent:', {
-      message: error.message,
-      type: error.type,
-      code: error.code,
-      stack: error.stack
+      message: stripeError.message,
+      type: stripeError.type,
+      code: stripeError.code,
+      stack: stripeError.stack
     });
 
     // Return a more detailed error response
     return NextResponse.json(
       { 
-        error: error.message,
-        type: error.type,
-        code: error.code
+        error: stripeError.message,
+        type: stripeError.type,
+        code: stripeError.code
       },
       { status: 500 }
     );
