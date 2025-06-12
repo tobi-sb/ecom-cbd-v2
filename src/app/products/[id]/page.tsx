@@ -712,7 +712,7 @@ export default function ProductDetailPage() {
                 </ul>
                 
                 <h4>Politique de retour</h4>
-                <p>Nous acceptons les retours dans les 14 jours suivant la réception de votre commande. Pour être éligible à un retour, votre article doit être inutilisé et dans le même état que celui où vous l'avez reçu, et doit également être dans l'emballage d'origine.</p>
+                <p>Nous acceptons les retours dans les 14 jours suivant la réception de votre commande. Pour être éligible à un retour, votre article doit être inutilisé et dans le même état que celui où vous l&apos;avez reçu, et doit également être dans l&apos;emballage d&apos;origine.</p>
               </div>
             )}
           </div>

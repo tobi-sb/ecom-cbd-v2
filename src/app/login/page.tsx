@@ -24,9 +24,10 @@ export default function LoginPage() {
     try {
       await login(email, password);
       router.push('/'); // Redirect to homepage after successful login
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Login error:', err);
-      setError(err.message || 'Une erreur est survenue lors de la connexion.');
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue lors de la connexion.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +95,7 @@ export default function LoginPage() {
 
         <div className={styles.authFooter}>
           <p>
-            Vous n'avez pas encore de compte ?{' '}
+            Vous n&apos;avez pas encore de compte ?{' '}
             <Link href="/register">Inscrivez-vous</Link>
           </p>
         </div>
