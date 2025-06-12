@@ -70,27 +70,31 @@ export default function EditProduct() {
           getProductPriceOptions(productId)
         ]);
         
-        setFormData({
-          ...product,
-          category_id: product.category_id || ''
-        });
-        
-        // Déterminer le type de prix utilisé
-        const hasWeightPricing = product.price_3g > 0 || product.price_5g > 0 || 
-                                product.price_10g > 0 || product.price_30g > 0 || product.price_50g > 0;
-        const hasDynamicPricing = priceOptionsData.length > 0;
-        
-        setUseWeightPricing(hasWeightPricing && !hasDynamicPricing);
-        setUseDynamicPricing(hasDynamicPricing && !hasWeightPricing);
+        if (product) {
+          setFormData({
+            ...product,
+            category_id: product.category_id || ''
+          });
+          
+          // Déterminer le type de prix utilisé
+          const hasWeightPricing = product.price_3g > 0 || product.price_5g > 0 || 
+                                  product.price_10g > 0 || product.price_30g > 0 || product.price_50g > 0;
+          const hasDynamicPricing = priceOptionsData.length > 0;
+          
+          setUseWeightPricing(hasWeightPricing && !hasDynamicPricing);
+          setUseDynamicPricing(hasDynamicPricing && !hasWeightPricing);
+          
+          if (product.image_url) {
+            setImagePreview(product.image_url);
+          }
+        } else {
+          setFormError('Produit introuvable.');
+        }
         
         setCategories(categoriesData);
         setColorVariants(colorVariantsData);
         setProductImages(productImagesData);
         setPriceOptions(priceOptionsData);
-        
-        if (product.image_url) {
-          setImagePreview(product.image_url);
-        }
       } catch (error) {
         console.error('Error fetching product data:', error);
         setFormError('Erreur lors du chargement des données du produit.');
