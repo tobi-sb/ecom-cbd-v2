@@ -626,7 +626,8 @@ export default function ProductsPage() {
                       price_3g={product.price_3g}
                       price_5g={product.price_5g}
                       price_10g={product.price_10g}
-                      price_20g={product.price_20g}
+                      price_30g={product.price_30g}
+                      price_50g={product.price_50g}
                       image={product.image_url || '/images/placeholder-product.jpg'}
                       tag={product.tag}
                       onAddToCart={handleAddToCart}

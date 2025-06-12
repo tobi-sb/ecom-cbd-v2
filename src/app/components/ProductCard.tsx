@@ -18,7 +18,8 @@ interface ProductCardProps {
   price_3g?: number;
   price_5g?: number;
   price_10g?: number;
-  price_20g?: number;
+  price_30g?: number;
+  price_50g?: number;
   image: string;
   tag?: string;
   onAddToCart?: () => void;
@@ -40,7 +41,8 @@ const ProductCard = ({
   price_3g,
   price_5g,
   price_10g,
-  price_20g,
+  price_30g,
+  price_50g,
   image, 
   tag,
   onAddToCart,
@@ -51,7 +53,7 @@ const ProductCard = ({
 
   // Déterminer si c'est un produit avec un prix de base ou des prix au gramme
   const hasWeightPricing = price_3g && price_3g > 0 || price_5g && price_5g > 0 || 
-                         price_10g && price_10g > 0 || price_20g && price_20g > 0;
+                         price_10g && price_10g > 0 || price_30g && price_30g > 0 || price_50g && price_50g > 0;
   
   // Déterminer le prix à afficher
   const displayPrice = base_price && base_price > 0 ? base_price : price;
