@@ -57,19 +57,19 @@ export default function CheckoutSuccess() {
         </p>
         
         <p className={styles.emailInfo}>
-          Un email de confirmation a été envoyé à l'adresse fournie lors de votre commande avec tous les détails.
+          Un email de confirmation a été envoyé à l&apos;adresse fournie lors de votre commande avec tous les détails.
         </p>
         
         <div className={styles.shippingInfo}>
           <h2>Prochaines étapes</h2>
           <p>Votre commande sera traitée et expédiée dans les 1 à 3 jours ouvrables.</p>
-          <p>Vous recevrez un email de confirmation d'expédition avec un numéro de suivi dès que votre colis sera en route.</p>
+          <p>Vous recevrez un email de confirmation d&apos;expédition avec un numéro de suivi dès que votre colis sera en route.</p>
         </div>
         
         <div className={styles.actionButtons}>
           <Link href="/" className={styles.homeButton}>
             <FontAwesomeIcon icon={faHome} />
-            Retour à l'accueil
+            Retour à l&apos;accueil
           </Link>
           
           <Link href="/products" className={styles.shopButton}>
@@ -80,7 +80,7 @@ export default function CheckoutSuccess() {
         
         <div className={styles.support}>
           <p>
-            Besoin d'aide? Contactez notre <Link href="/contact">service client</Link>
+            Besoin d&apos;aide? Contactez notre <Link href="/contact">service client</Link>
           </p>
         </div>
       </div>
