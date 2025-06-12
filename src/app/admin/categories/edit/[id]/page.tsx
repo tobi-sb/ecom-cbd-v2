@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useParams } from 'next/navigation';
 import styles from '../../../admin.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowLeft, faSave, faUpload, faTrash, faBug, faExchangeAlt } from '@fortawesome/free-solid-svg-icons';
@@ -10,9 +10,10 @@ import { getCategoryById, updateCategory, uploadCategoryImage, deleteCategory, c
 import Image from 'next/image';
 import { Category, Product } from '@/types/database.types';
 
-export default function EditCategoryPage({ params }: { params: { id: string } }) {
+export default function EditCategoryPage() {
   const router = useRouter();
-  const id = params.id;
+  const params = useParams();
+  const id = params?.id as string;
   
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -235,8 +236,10 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
     } catch (error: unknown) {
       console.error('Error updating category:', error);
       
-      // Handle specific error cases
-      if (error.code === '23505') { // Unique violation
+      // Handle specific error cases with proper type checking
+      const errorObj = error as { code?: string; message?: string };
+      
+      if (errorObj.code === '23505') { // Unique violation
         setMessage({
           type: 'error',
           text: 'Ce slug est déjà utilisé par une autre catégorie. Veuillez en choisir un autre.'
@@ -306,14 +309,16 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
     } catch (err: unknown) {
       console.error('Error deleting category:', err);
       
-      // Improved error handling
-      if (err.code === 'CATEGORY_HAS_PRODUCTS') {
+      // Improved error handling with proper type checking
+      const errorObj = err as { code?: string; message?: string };
+      
+      if (errorObj.code === 'CATEGORY_HAS_PRODUCTS') {
         // Custom error message for when category has products
         setMessage({
           type: 'error',
-          text: err.message || 'Cette catégorie a des produits associés. Veuillez d\'abord supprimer ou réassigner ces produits.'
+          text: errorObj.message || 'Cette catégorie a des produits associés. Veuillez d\'abord supprimer ou réassigner ces produits.'
         });
-      } else if (err.code === '23503') {
+      } else if (errorObj.code === '23503') {
         // Database foreign key constraint error
         setMessage({
           type: 'error',
@@ -323,7 +328,7 @@ export default function EditCategoryPage({ params }: { params: { id: string } })
         // Generic error message
         setMessage({
           type: 'error',
-          text: 'Erreur lors de la suppression de la catégorie. ' + (err.message || '')
+          text: 'Erreur lors de la suppression de la catégorie. ' + (errorObj.message || '')
         });
       }
     } finally {
