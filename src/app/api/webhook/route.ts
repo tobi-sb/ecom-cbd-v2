@@ -5,12 +5,25 @@ import { createOrder } from '@/services/order.service';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_51RIzYF60Rzh3ncZFQo1efXrqL9WVky6WLqCThAYQnxtopgu9O7OCywKKGjldaUiv0tjNtsN0LVSZdnDraxlBvvA500EJq1z2fZ');
 
+// Define interface for Stripe line items
+interface StripeLineItem {
+  price?: {
+    product: string;
+    product_data?: {
+      images?: string[];
+    };
+  };
+  description?: string;
+  quantity?: number;
+  amount_total: number;
+}
+
 // This is your Stripe webhook secret for testing your endpoint locally.
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET || '';
 
 export async function POST(request: Request) {
   const body = await request.text();
-  const headersList = headers();
+  const headersList = await headers();
   const sig = headersList.get('stripe-signature');
 
   let event;
@@ -23,9 +36,10 @@ export async function POST(request: Request) {
       // For production with webhook signature verification
       event = stripe.webhooks.constructEvent(body, sig, endpointSecret);
     }
-  } catch (err: any) {
-    console.error(`Webhook Error: ${err.message}`);
-    return NextResponse.json({ error: `Webhook Error: ${err.message}` }, { status: 400 });
+  } catch (err: unknown) {
+    const errorMessage = err instanceof Error ? err.message : 'Unknown webhook error';
+    console.error(`Webhook Error: ${errorMessage}`);
+    return NextResponse.json({ error: `Webhook Error: ${errorMessage}` }, { status: 400 });
   }
 
   // Handle the event
@@ -44,21 +58,21 @@ export async function POST(request: Request) {
           currency: paymentIntent.currency,
           shipping_address: {
             name: session.shipping_details?.name || '',
-            address: session.shipping_details?.address?.line1 || '',
+            street: session.shipping_details?.address?.line1 || '',
             city: session.shipping_details?.address?.city || '',
-            postal_code: session.shipping_details?.address?.postal_code || '',
+            postalCode: session.shipping_details?.address?.postal_code || '',
             country: session.shipping_details?.address?.country || '',
             phone: session.shipping_details?.phone || ''
           },
           billing_address: {
             name: session.customer_details?.name || '',
-            address: session.customer_details?.address?.line1 || '',
+            street: session.customer_details?.address?.line1 || '',
             city: session.customer_details?.address?.city || '',
-            postal_code: session.customer_details?.address?.postal_code || '',
+            postalCode: session.customer_details?.address?.postal_code || '',
             country: session.customer_details?.address?.country || '',
             phone: session.customer_details?.phone || ''
           },
-          items: session.line_items?.data.map((item: any) => ({
+          items: session.line_items?.data.map((item: StripeLineItem) => ({
             product_id: item.price?.product as string,
             name: item.description || '',
             quantity: item.quantity || 1,
