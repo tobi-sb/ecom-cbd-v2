@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useSearchParams } from 'next/navigation';
 import styles from './admin.module.css';
@@ -11,7 +11,8 @@ import {
   faChartLine,
   faTags,
   faShoppingCart,
-  faTicketAlt
+  faTicketAlt,
+  faSpinner
 } from '@fortawesome/free-solid-svg-icons';
 import ProductsTab from './components/ProductsTab';
 import CategoriesTab from './components/CategoriesTab';
@@ -19,7 +20,7 @@ import OrdersTab from './components/OrdersTab';
 import PromoCodesTab from './components/PromoCodesTab';
 import { supabase } from '@/lib/supabase';
 
-export default function AdminDashboard() {
+function AdminDashboardContent() {
   const searchParams = useSearchParams();
   const tabParam = searchParams.get('tab');
   const [activeTab, setActiveTab] = useState(tabParam || 'products');
@@ -105,6 +106,19 @@ export default function AdminDashboard() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function AdminDashboard() {
+  return (
+    <Suspense fallback={
+      <div className={styles.loading}>
+        <FontAwesomeIcon icon={faSpinner} spin />
+        <p>Chargement du tableau de bord...</p>
+      </div>
+    }>
+      <AdminDashboardContent />
+    </Suspense>
   );
 }
 
