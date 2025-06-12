@@ -8,11 +8,10 @@ import { useCart } from '@/contexts/CartContext';
 import { useAuth } from '@/contexts/AuthContext';
 import styles from './page.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
-import { faSpinner, faShoppingBag, faExclamationTriangle, faArrowLeft } from '@fortawesome/free-solid-svg-icons';
-import Link from 'next/link';
-import { supabase } from '@/lib/supabase';
+import { faSpinner, faExclamationTriangle } from '@fortawesome/free-solid-svg-icons';
 import { createOrder } from '@/services/order.service';
 import { validatePromoCode } from '@/services/promo.service';
+import type { PaymentIntent as StripePaymentIntent } from '@stripe/stripe-js';
 
 // Load Stripe outside of component render
 const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || '');
@@ -22,7 +21,7 @@ interface CartItem {
   name: string;
   quantity: number;
   price: number;
-  image_url?: string;
+  image?: string;
 }
 
 interface FormData {
@@ -51,7 +50,7 @@ function PaymentForm({
   formData: FormData;
   cart: CartItem[];
   totalAmount: number;
-  onSuccess: (paymentIntent: any) => void;
+  onSuccess: (paymentIntent: StripePaymentIntent) => void;
   onError: (error: string) => void;
 }) {
   const stripe = useStripe();
@@ -190,7 +189,6 @@ function PaymentForm({
 }
 
 export default function Checkout() {
-  const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { cart, getCartTotal, clearCart } = useCart();
   const { user, isAuthenticated } = useAuth();
@@ -243,49 +241,41 @@ export default function Checkout() {
   const discount = promoCodeResult?.valid ? promoCodeResult.discount : 0;
   const totalWithShippingAndDiscount = cartTotal + shippingCost - discount;
 
-  const handlePaymentSuccess = async (paymentIntent: any) => {
+  const handlePaymentSuccess = async (paymentIntent: StripePaymentIntent) => {
     try {
       console.log('Starting order creation process...');
-      console.log('Payment Intent:', paymentIntent);
-      console.log('Form Data:', formData);
-      console.log('Cart Items:', cart);
-
+      
       // Create order in Supabase
-      const orderData = {
+      await createOrder({
         stripe_payment_intent_id: paymentIntent.id,
-        stripe_customer_id: paymentIntent.customer,
-        total_amount: paymentIntent.amount / 100,
+        stripe_customer_id: undefined, // We don't have access to customer ID in the client
+        total_amount: paymentIntent.amount / 100, // Convert from cents to euros
         currency: paymentIntent.currency,
         shipping_address: {
-          name: formData.shippingName,
-          address: formData.shippingAddress,
+          street: formData.shippingAddress,
           city: formData.shippingCity,
-          postal_code: formData.shippingPostalCode,
+          postalCode: formData.shippingPostalCode,
           country: 'FR',
+          name: formData.shippingName,
           phone: formData.shippingPhone
         },
         billing_address: {
-          name: formData.billingName,
-          address: formData.billingAddress,
+          street: formData.billingAddress,
           city: formData.billingCity,
-          postal_code: formData.billingPostalCode,
+          postalCode: formData.billingPostalCode,
           country: 'FR',
+          name: formData.billingName,
           phone: formData.billingPhone
         },
-        items: cart.map((item: CartItem) => ({
+        items: cart.map(item => ({
           product_id: item.id,
           name: item.name,
           quantity: item.quantity,
           price: item.price,
-          image_url: item.image_url
+          image_url: item.image
         })),
         shipping_method: formData.shippingMethod
-      };
-
-      console.log('Order data to be saved:', orderData);
-
-      const order = await createOrder(orderData);
-      console.log('Order created successfully:', order);
+      });
 
       // Clear cart and redirect to success page
       clearCart();

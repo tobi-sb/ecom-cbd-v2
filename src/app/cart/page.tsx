@@ -65,7 +65,7 @@ export default function Cart() {
         <div className={styles.emptyCart}>
           <FontAwesomeIcon icon={faShoppingBag} className={styles.emptyCartIcon} />
           <h2>Votre panier est vide</h2>
-          <p>Vous n'avez pas encore ajouté de produits à votre panier.</p>
+          <p>Vous n&apos;avez pas encore ajouté de produits à votre panier.</p>
           <Link href="/products" className={styles.continueShopping}>
             <FontAwesomeIcon icon={faArrowLeft} className={styles.arrowIcon} />
             Découvrir nos produits
