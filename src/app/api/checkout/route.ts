@@ -3,7 +3,7 @@ import Stripe from 'stripe';
 import { supabase } from '@/lib/supabase';
 
 // Initialize Stripe with the secret key from environment variables
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || 'sk_test_placeholder');
 
 // Helper function to validate and format image URLs
 function getValidImageUrl(imageUrl: string | undefined, origin: string | null): string[] {
