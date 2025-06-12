@@ -38,7 +38,8 @@ export default function Contact() {
         subject: '',
         message: '',
       });
-    } catch (err) {
+    } catch {
+      // No need to capture the error object since we're not using it
       setError('Une erreur est survenue. Veuillez réessayer plus tard.');
     } finally {
       setIsSubmitting(false);
@@ -61,7 +62,7 @@ export default function Contact() {
           </div>
           
           <div className={styles.infoCard}>
-            <h3>Heures d'Ouverture</h3>
+            <h3>Heures d&apos;Ouverture</h3>
             <p>Lundi - Vendredi: 9h - 18h</p>
             <p>Samedi: 10h - 16h</p>
             <p>Dimanche: Fermé</p>

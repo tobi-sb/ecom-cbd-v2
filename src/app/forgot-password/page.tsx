@@ -21,9 +21,10 @@ export default function ForgotPasswordPage() {
     try {
       await resetPassword(email);
       setIsSuccess(true);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Password reset error:', err);
-      setError(err.message || 'Une erreur est survenue lors de l\'envoi du lien de réinitialisation.');
+      const errorMessage = err instanceof Error ? err.message : 'Une erreur est survenue lors de l\'envoi du lien de réinitialisation.';
+      setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
