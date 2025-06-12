@@ -71,7 +71,7 @@ export interface ProductWithCategory extends Product {
 }
 
 export type ProductWithPrices = Product & {
-  weightOptions: { weight: string; price: number }[];
+  weightOptions: { weight: string; price: number; discounted_price?: number | null | undefined }[];
 };
 
 export type Order = {

@@ -186,15 +186,9 @@ export const getCategoryBySlug = async (slug: string): Promise<Category | null> 
  * Create a new product
  */
 export const createProduct = async (productData: Partial<Product>): Promise<Product> => {
-  // Ensure price_20g has a default value to satisfy NOT NULL constraint
-  const dataWithDefaults = {
-    ...productData,
-    price_20g: 0  // Valeur par défaut pour satisfaire la contrainte NOT NULL
-  };
-
   const { data, error } = await supabase
     .from('products')
-    .insert([dataWithDefaults])
+    .insert([productData])
     .select()
     .single();
 
