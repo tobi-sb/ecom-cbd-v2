@@ -22,7 +22,6 @@ const FeaturedProducts = () => {
   const [productsPerView, setProductsPerView] = useState(3); // Default to 3 products per view
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
-  const [containerWidth, setContainerWidth] = useState(0);
   const containerRef = useRef<HTMLDivElement | null>(null);
 
   // Fetch products from Supabase
@@ -53,22 +52,21 @@ const FeaturedProducts = () => {
     fetchData();
   }, []);
 
-  // Update containerWidth when window is resized
+  // Update dimensions when window is resized
   useEffect(() => {
-    const updateContainerWidth = () => {
-      if (containerRef.current) {
-        setContainerWidth(containerRef.current.offsetWidth);
-      }
+    const updateDimensions = () => {
+      // We're no longer tracking containerWidth
+      // Just keeping the ref for potential future use
     };
     
     // Call it once to initialize
-    updateContainerWidth();
+    updateDimensions();
     
     // Add event listener
-    window.addEventListener('resize', updateContainerWidth);
+    window.addEventListener('resize', updateDimensions);
     
     // Cleanup
-    return () => window.removeEventListener('resize', updateContainerWidth);
+    return () => window.removeEventListener('resize', updateDimensions);
   }, []);
 
   // Update productsPerView based on window size
@@ -212,7 +210,7 @@ const FeaturedProducts = () => {
                 width: '100%'
               }}
             >
-              {products.map((product, index) => (
+              {products.map((product) => (
                 <div 
                   key={product.id}
                   style={{

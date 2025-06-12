@@ -2,13 +2,9 @@
 
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faArrowRight } from '@fortawesome/free-solid-svg-icons';
+import Link from 'next/link';
 
 export default function ProductsLink() {
-  const handleClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    window.location.href = '/products';
-  };
-
   return (
     <div style={{ 
       textAlign: 'center', 
@@ -16,9 +12,8 @@ export default function ProductsLink() {
       position: 'relative',
       zIndex: 9999
     }}>
-      <a
+      <Link
         href="/products"
-        onClick={handleClick}
         style={{
           backgroundColor: '#FFD700',
           color: '#333',
@@ -48,7 +43,7 @@ export default function ProductsLink() {
         }}
       >
         Voir tous nos produits <FontAwesomeIcon icon={faArrowRight} style={{ marginLeft: '8px' }} />
-      </a>
+      </Link>
     </div>
   );
 } 
