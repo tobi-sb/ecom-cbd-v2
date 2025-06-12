@@ -86,7 +86,8 @@ export default function ProductsTab() {
     
     // Sinon, on vérifie s'il a des prix au gramme
     const hasWeightPricing = product.price_3g > 0 || product.price_5g > 0 || 
-                           product.price_10g > 0 || product.price_20g > 0;
+                           product.price_10g > 0 || product.price_30g > 0 || 
+                           product.price_50g > 0;
     
     if (hasWeightPricing) {
       // Trouver le prix le plus bas parmi les options disponibles
@@ -94,7 +95,8 @@ export default function ProductsTab() {
         product.price_3g > 0 ? product.price_3g : Infinity,
         product.price_5g > 0 ? product.price_5g : Infinity,
         product.price_10g > 0 ? product.price_10g : Infinity,
-        product.price_20g > 0 ? product.price_20g : Infinity
+        product.price_30g > 0 ? product.price_30g : Infinity,
+        product.price_50g > 0 ? product.price_50g : Infinity
       ];
       
       const minPrice = Math.min(...prices);
