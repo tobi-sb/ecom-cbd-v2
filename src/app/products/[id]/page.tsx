@@ -141,6 +141,7 @@ export default function ProductDetailPage() {
     );
   }
   
+  // Remove the unused variable
   const selectedWeightOption = product.weightOptions.find(option => option.weight === selectedWeight) || product.weightOptions[0];
   const categoryDetails = product.categories as Category;
   
@@ -419,13 +420,13 @@ export default function ProductDetailPage() {
               </div>
               
               <div className={styles.productPrice}>
-                {selectedWeightOption.discounted_price ? (
+                {product.discounted_price ? (
                   <div style={{ display: 'flex', alignItems: 'baseline' }}>
                     <span className={styles.priceOriginal}>
                       {getAdjustedPrice(selectedWeightOption.price).toFixed(2)}€
                     </span>
                     <span className={styles.productDetailPriceDiscount}>
-                      {getAdjustedPrice(selectedWeightOption.discounted_price).toFixed(2)}€
+                      {getAdjustedPrice(product.discounted_price).toFixed(2)}€
                     </span>
                   </div>
                 ) : (
