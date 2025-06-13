@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import styles from '../styles.module.css';
 import './mobile-fixes.css'; // Import des corrections CSS pour mobile
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
@@ -178,10 +178,18 @@ export default function ProductsPage() {
     
     switch (sortOrder) {
       case 'price-low':
-        sortedProducts.sort((a, b) => a.price_3g - b.price_3g);
+        sortedProducts.sort((a, b) => {
+          const priceA = a.price_3g || a.base_price || 0;
+          const priceB = b.price_3g || b.base_price || 0;
+          return priceA - priceB;
+        });
         break;
       case 'price-high':
-        sortedProducts.sort((a, b) => b.price_3g - a.price_3g);
+        sortedProducts.sort((a, b) => {
+          const priceA = a.price_3g || a.base_price || 0;
+          const priceB = b.price_3g || b.base_price || 0;
+          return priceB - priceA;
+        });
         break;
       case 'newest':
         // Sort by created_at if available, otherwise by id
@@ -220,6 +228,21 @@ export default function ProductsPage() {
     setSortOrder('default');
     setPriceRange([0, 100]);
   };
+
+  // Filter products by price range
+  const filteredProducts = useMemo(() => {
+    if (!sortedProducts.length) return [];
+    
+    // Only filter if price range is not the default
+    if (priceRange[0] === 0 && priceRange[1] === 100) {
+      return sortedProducts;
+    }
+    
+    return sortedProducts.filter(product => {
+      const productPrice = product.price_3g || product.base_price || 0;
+      return productPrice >= priceRange[0] && productPrice <= priceRange[1];
+    });
+  }, [sortedProducts, priceRange]);
 
   // Display loading state while fetching products
   if (loading) {
@@ -614,8 +637,8 @@ export default function ProductsPage() {
             
             {/* Products Grid */}
             <div className="products-grid-fixed">
-              {sortedProducts.length > 0 ? (
-                sortedProducts.map(product => (
+              {filteredProducts.length > 0 ? (
+                filteredProducts.map(product => (
                   <div 
                     key={product.id} 
                     className="product-grid-item-fixed"
@@ -624,14 +647,9 @@ export default function ProductsPage() {
                       id={product.id}
                       name={product.name}
                       description={product.description}
-                      price={product.price_3g}
+                      price={product.price_3g || product.base_price || 0}
                       discounted_price={product.discounted_price}
                       base_price={product.base_price}
-                      price_3g={product.price_3g}
-                      price_5g={product.price_5g}
-                      price_10g={product.price_10g}
-                      price_30g={product.price_30g}
-                      price_50g={product.price_50g}
                       image={product.image_url || '/images/placeholder-product.jpg'}
                       tag={product.tag}
                       onAddToCart={handleAddToCart}

@@ -228,9 +228,6 @@ const FeaturedProducts = () => {
                     price={product.price_3g || product.price_5g || product.price_10g || product.base_price || 0}
                     discounted_price={product.discounted_price}
                     base_price={product.base_price}
-                    price_3g={product.price_3g}
-                    price_5g={product.price_5g}
-                    price_10g={product.price_10g}
                     image={product.image_url || '/images/placeholder-product.jpg'}
                     tag={product.tag}
                     onAddToCart={handleAddToCart}
