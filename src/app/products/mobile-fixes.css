@@ -184,7 +184,7 @@
 
 /* Product images - Mobile */
 .mobile-grid .product-image-fixed {
-  height: 160px !important; /* Hauteur réduite pour mobile */
+  height: 140px !important; /* Hauteur réduite pour mobile */
 }
 
 /* Product images - Tablet */
@@ -213,6 +213,7 @@
   flex-direction: column !important;
   background-color: var(--color-green, #0f4d1e) !important;
   color: white !important;
+  flex: 1 !important; /* Prend tout l'espace disponible */
 }
 
 /* Product info - Mobile */
@@ -221,6 +222,9 @@
   height: auto !important; /* Hauteur automatique au lieu de fixe */
   min-height: 140px !important; /* Hauteur minimale */
   padding: 10px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  justify-content: space-between !important; /* Répartit l'espace entre les éléments */
 }
 
 /* Product info - Tablet */
