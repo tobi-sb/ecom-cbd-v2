@@ -32,34 +32,34 @@
 .desktop-grid .product-grid-item-fixed {
   width: calc(25% - 15px) !important; /* 4 produits par ligne */
   margin: 0 0 20px 0 !important;
-  aspect-ratio: 0.7 !important; /* Ratio plus large que haut */
-  min-height: 320px !important; /* Hauteur augmentée pour la description plus longue */
+  height: 380px !important; /* Hauteur fixe pour desktop */
 }
 
 .tablet-grid .product-grid-item-fixed {
   width: calc(33.333% - 10px) !important; /* 3 produits par ligne */
   margin: 0 0 15px 0 !important;
-  aspect-ratio: 0.75 !important; /* Ratio plus large que haut */
-  min-height: 280px !important; /* Hauteur augmentée pour la description plus longue */
+  height: 350px !important; /* Hauteur fixe pour tablette */
 }
 
 .mobile-grid .product-grid-item-fixed {
   width: calc(50% - 5px) !important; /* 2 produits par ligne */
   margin: 0 0 10px 0 !important;
-  aspect-ratio: 0.8 !important; /* Ratio plus large que haut */
-  min-height: 240px !important; /* Hauteur réduite */
+  height: 320px !important; /* Hauteur fixe pour mobile */
 }
 
 /* Très petit mobile - ajustements spécifiques */
 @media (max-width: 359px) {
   .product-grid-item-fixed {
-    aspect-ratio: 0.85 !important; /* Ratio encore plus large que haut */
-    min-height: 220px !important; /* Hauteur encore plus réduite */
+    height: 280px !important; /* Hauteur fixe pour très petit mobile */
+  }
+  
+  .product-image-fixed {
+    height: 160px !important; /* Hauteur fixe pour très petit mobile */
   }
   
   .product-info-fixed {
+    height: 120px !important; /* Hauteur fixe pour très petit mobile */
     padding: 8px !important;
-    min-height: 100px !important; /* Hauteur minimale réduite */
   }
   
   .product-title-fixed {
@@ -164,14 +164,27 @@
   z-index: 2 !important;
 }
 
-/* Product images */
+/* Product images - Base */
 .product-image-fixed {
   width: 100% !important;
-  height: 0 !important;
-  padding-bottom: 65% !important; /* Ratio réduit pour des images moins hautes */
   position: relative !important;
   overflow: hidden !important;
   cursor: pointer !important;
+}
+
+/* Product images - Mobile */
+.mobile-grid .product-image-fixed {
+  height: 180px !important; /* Hauteur fixe pour mobile */
+}
+
+/* Product images - Tablet */
+.tablet-grid .product-image-fixed {
+  height: 200px !important; /* Hauteur fixe pour tablette */
+}
+
+/* Product images - Desktop */
+.desktop-grid .product-image-fixed {
+  height: 220px !important; /* Hauteur fixe pour desktop */
 }
 
 .product-image-fixed img {
@@ -195,17 +208,20 @@
 
 /* Product info - Mobile */
 .mobile-grid .product-info-fixed {
-  min-height: 110px !important;
+  min-height: initial !important;
+  height: 140px !important; /* Hauteur fixe pour mobile */
 }
 
 /* Product info - Tablet */
 .tablet-grid .product-info-fixed {
-  min-height: 125px !important;
+  min-height: initial !important;
+  height: 150px !important; /* Hauteur fixe pour tablette */
 }
 
 /* Product info - Desktop */
 .desktop-grid .product-info-fixed {
-  min-height: 140px !important;
+  min-height: initial !important;
+  height: 160px !important; /* Hauteur fixe pour desktop */
 }
 
 /* Product title */
@@ -418,37 +434,6 @@
   font-size: 0.7rem !important;
   font-weight: bold !important;
   z-index: 2 !important;
-}
-
-/* Ajustements spécifiques pour très petits écrans */
-@media (max-width: 359px) {
-  .product-info-fixed {
-    padding: 8px !important;
-    min-height: 120px !important;
-  }
-  
-  .product-title-fixed {
-    font-size: 0.9rem !important;
-    margin-bottom: 5px !important;
-  }
-  
-  .product-description-fixed {
-    font-size: 0.75rem !important;
-    line-height: 1.25 !important;
-    max-height: 3.75em !important;
-  }
-  
-  .product-price-fixed {
-    flex-direction: column !important;
-    align-items: flex-start !important;
-    padding-top: 5px !important;
-  }
-  
-  .add-to-cart-btn-fixed {
-    width: 100% !important;
-    margin-top: 5px !important;
-    padding: 5px !important;
-  }
 }
 
 /* Effet de texte */
