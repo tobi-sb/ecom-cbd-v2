@@ -1,18 +1,21 @@
 'use client';
 
-import { useState, useEffect, CSSProperties, useRef } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import styles from '../styles.module.css';
-import ProductCard from './ProductCard';
+import './featured-products.css'; // Import des styles spécifiques pour les produits en vedette
 import AddToCartNotification from './AddToCartNotification';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faChevronLeft,
   faChevronRight,
-  faSpinner
+  faSpinner,
+  faCartPlus
 } from '@fortawesome/free-solid-svg-icons';
 import { getAllProducts } from '@/services/product.service';
 import { Product } from '@/types/database.types';
 import Link from 'next/link';
+import Image from 'next/image';
+import { useCart } from '@/contexts/CartContext';
 
 const FeaturedProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -23,6 +26,7 @@ const FeaturedProducts = () => {
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const { addToCart } = useCart();
 
   // Fetch products from Supabase
   useEffect(() => {
@@ -114,36 +118,23 @@ const FeaturedProducts = () => {
     }
   };
 
-  const handleAddToCart = () => {
+  const handleAddToCart = (e: React.MouseEvent, product: Product) => {
+    // Stop propagation to prevent navigation when clicking the cart button
+    e.preventDefault();
+    e.stopPropagation();
+    
+    // Add the product to the cart
+    addToCart({
+      id: product.id,
+      name: product.name,
+      price: product.price_3g || product.base_price || 0,
+      image: product.image_url || '/images/placeholder-product.jpg',
+      description: product.description
+    });
+    
+    // Show notification
     setShowNotification(true);
   };
-
-  // Add this style block at the end of the component before the return statement
-  const mobileStyles = isMobile ? {
-    productPrice: {
-      display: 'flex',
-      flexDirection: 'row' as const,
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      width: '100%'
-    } as CSSProperties,
-    addToCartBtn: {
-      marginTop: 0
-    } as CSSProperties,
-    price: {
-      marginBottom: 0
-    } as CSSProperties
-  } : {};
-
-  // Styles for tablet view
-  const tabletStyles = isTablet ? {
-    productCard: {
-      maxWidth: '90%',
-      width: '90%',
-      margin: '0 auto',
-      transform: 'none'
-    } as CSSProperties
-  } : {};
 
   if (loading) {
     return (
@@ -175,7 +166,7 @@ const FeaturedProducts = () => {
               maxWidth: '1200px',
               margin: '0 auto',
               position: 'relative',
-              padding: isMobile ? '0 15px' : isTablet ? '0 25px' : '0 60px',
+              padding: '0',
               overflow: 'hidden',
             }}
           >
@@ -206,32 +197,65 @@ const FeaturedProducts = () => {
                 marginLeft: '0',
                 marginRight: '0',
                 paddingBottom: '30px',
-                width: '100%'
+                width: '100%',
+                justifyContent: 'flex-start'
               }}
             >
-              {products.map((product) => (
+              {products.map((product, index) => (
                 <div 
                   key={product.id}
+                  className={`featured-product-container ${index === 0 ? 'featured-product-container-first' : ''}`}
                   style={{
                     flex: `0 0 ${100 / productsPerView}%`,
-                    padding: isMobile ? '0 2%' : isTablet ? '0 8px' : '0 15px',
-                    boxSizing: 'border-box',
-                    display: 'flex',
-                    justifyContent: 'center'
+                    boxSizing: 'border-box'
                   }}
                 >
-                  <ProductCard
-                    id={product.id}
-                    name={product.name}
-                    description={product.description}
-                    price={product.price_3g || product.price_5g || product.price_10g || product.base_price || 0}
-                    discounted_price={product.discounted_price}
-                    base_price={product.base_price}
-                    image={product.image_url || '/images/placeholder-product.jpg'}
-                    tag={product.tag}
-                    onAddToCart={handleAddToCart}
-                    customStyles={isMobile ? mobileStyles : isTablet ? tabletStyles : {}}
-                  />
+                  <Link href={`/products/${product.id}`} className="featured-product-link">
+                    <div className="featured-product-card">
+                      <div className="featured-product-image">
+                        <Image 
+                          src={product.image_url || '/images/placeholder-product.jpg'} 
+                          alt={product.name}
+                          width={300}
+                          height={200}
+                          style={{ objectFit: 'cover' }}
+                        />
+                        {product.tag && <div className="featured-product-tag">{product.tag}</div>}
+                      </div>
+                      <div className="featured-product-info">
+                        <h3 className="featured-product-title">{product.name}</h3>
+                        <p className="featured-product-description">
+                          {product.description.length > 80 
+                            ? `${product.description.substring(0, 80)}...` 
+                            : product.description}
+                        </p>
+                        <div className="featured-product-price">
+                          {product.discounted_price ? (
+                            <div className="featured-product-price-container">
+                              <span className="featured-product-price-original">
+                                {(product.price_3g || product.base_price || 0).toFixed(2)}€
+                              </span>
+                              <span className="featured-product-price-discount">
+                                {product.discounted_price.toFixed(2)}€
+                              </span>
+                            </div>
+                          ) : (
+                            <span className="featured-product-price-normal">
+                              {(product.price_3g || product.base_price || 0).toFixed(2)}€
+                            </span>
+                          )}
+                          <button 
+                            className="featured-add-to-cart-btn" 
+                            onClick={(e) => handleAddToCart(e, product)}
+                            aria-label="Ajouter au panier"
+                          >
+                            <FontAwesomeIcon icon={faCartPlus} />
+                            <span>Ajouter</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </Link>
                 </div>
               ))}
             </div>

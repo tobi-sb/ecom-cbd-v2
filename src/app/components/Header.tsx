@@ -151,19 +151,19 @@ const Header = () => {
           </Link>
         </div>
         
-        {/* Authentication Links */}
-        {isAuthenticated ? (
+        {/* Authentication Links - Visible only on desktop */}
+        {!isMobile && isAuthenticated ? (
           <Link href="/profile" className={styles.userLink} title="Mon Profil" style={{ color: 'white' }}>
             <FontAwesomeIcon icon={faUser} />
           </Link>
-        ) : (
+        ) : !isMobile && (
           <Link href="/login" className={styles.authLink} title="Se connecter" style={{ color: 'white' }}>
             <FontAwesomeIcon icon={faSignInAlt} />
           </Link>
         )}
         
-        {/* Admin Link - Only show if user is admin */}
-        {isAuthenticated && isAdmin && (
+        {/* Admin Link - Only show if user is admin and not on mobile */}
+        {!isMobile && isAuthenticated && isAdmin && (
           <Link href="/admin" className={styles.adminLink} title="Administration">
             <FontAwesomeIcon icon={faUserShield} />
           </Link>
