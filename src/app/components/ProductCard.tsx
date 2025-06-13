@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCartPlus } from '@fortawesome/free-solid-svg-icons';
 import { useCart } from '@/contexts/CartContext';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 
 interface ProductCardProps {
   id: string;
@@ -39,6 +39,8 @@ const ProductCard = ({
 }: ProductCardProps) => {
   const { addToCart } = useCart();
   const [adding, setAdding] = useState(false);
+  const [truncatedDescription, setTruncatedDescription] = useState('');
+  const [screenSize, setScreenSize] = useState('mobile');
   
   // Déterminer le prix à afficher
   const displayPrice = base_price && base_price > 0 ? base_price : price;
@@ -48,6 +50,40 @@ const ProductCard = ({
   
   // Déterminer le prix à afficher dans le panier (le prix réduit s'il existe)
   const cartPrice = hasDiscount ? discounted_price : displayPrice;
+
+  // Détecter la taille de l'écran et ajuster la troncature
+  useEffect(() => {
+    const handleResize = () => {
+      const width = window.innerWidth;
+      let charLimit = 60; // Mobile par défaut
+      let screenType = 'mobile';
+      
+      if (width > 1023) {
+        charLimit = 120; // Desktop
+        screenType = 'desktop';
+      } else if (width > 767) {
+        charLimit = 90; // Tablette
+        screenType = 'tablet';
+      }
+      
+      setScreenSize(screenType);
+      
+      // Tronquer la description
+      if (description.length > charLimit) {
+        setTruncatedDescription(`${description.substring(0, charLimit)}...`);
+      } else {
+        setTruncatedDescription(description);
+      }
+    };
+    
+    // Exécuter au chargement et lors du redimensionnement
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    
+    return () => {
+      window.removeEventListener('resize', handleResize);
+    };
+  }, [description]);
 
   const handleAddToCart = (e: React.MouseEvent) => {
     // Stop propagation to prevent navigation when clicking the cart button
@@ -72,11 +108,6 @@ const ProductCard = ({
     }, 500);
   };
 
-  // Create a truncated description if it's too long
-  const truncatedDescription = description.length > 60 
-    ? `${description.substring(0, 60)}...` 
-    : description;
-
   return (
     <>
       <Link href={`/products/${id}`} className="product-card-link-fixed">
@@ -93,7 +124,7 @@ const ProductCard = ({
           </div>
           <div className="product-info-fixed">
             <h3 className="product-title-fixed">{name}</h3>
-            <p className="product-description-fixed">{truncatedDescription}</p>
+            <p className={`product-description-fixed ${screenSize}-description`}>{truncatedDescription}</p>
             <div className="product-price-fixed" style={customStyles.productPrice}>
               {hasDiscount ? (
                 <div className="product-price-container-fixed">

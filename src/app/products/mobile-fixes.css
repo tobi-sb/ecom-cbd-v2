@@ -33,14 +33,14 @@
   width: calc(25% - 15px) !important; /* 4 produits par ligne */
   margin: 0 0 20px 0 !important;
   aspect-ratio: 0.7 !important; /* Ratio plus large que haut */
-  min-height: 280px !important; /* Hauteur réduite */
+  min-height: 320px !important; /* Hauteur augmentée pour la description plus longue */
 }
 
 .tablet-grid .product-grid-item-fixed {
   width: calc(33.333% - 10px) !important; /* 3 produits par ligne */
   margin: 0 0 15px 0 !important;
   aspect-ratio: 0.75 !important; /* Ratio plus large que haut */
-  min-height: 260px !important; /* Hauteur réduite */
+  min-height: 280px !important; /* Hauteur augmentée pour la description plus longue */
 }
 
 .mobile-grid .product-grid-item-fixed {
@@ -86,6 +86,50 @@
   }
 }
 
+/* Product links */
+.product-card-link-fixed {
+  text-decoration: none !important;
+  color: inherit !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  z-index: 1 !important;
+  cursor: pointer !important;
+  transition: transform 0.2s ease-in-out !important;
+}
+
+.product-card-link-fixed:hover {
+  transform: translateY(-5px) !important;
+}
+
+.product-card-link-fixed:hover .product-card-fixed {
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Hover effect for product cards */
+.product-card-link-fixed::after {
+  content: "" !important;
+  position: absolute !important;
+  top: 0 !important;
+  left: 0 !important;
+  width: 100% !important;
+  height: 100% !important;
+  background-color: rgba(255, 255, 255, 0) !important;
+  transition: background-color 0.2s ease-in-out !important;
+  z-index: -1 !important;
+  border-radius: 8px !important;
+}
+
+.product-card-link-fixed:hover::after {
+  background-color: rgba(255, 255, 255, 0.1) !important;
+}
+
+.product-card-link-fixed:hover .product-title-fixed {
+  color: var(--color-accent, #d4af37) !important;
+  transition: color 0.2s ease-in-out !important;
+}
+
 /* Product cards */
 .product-card-fixed {
   width: 100% !important;
@@ -96,15 +140,28 @@
   border-radius: 8px !important;
   overflow: hidden !important;
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1) !important;
+  transition: box-shadow 0.2s ease-in-out !important;
+  position: relative !important;
+  cursor: pointer !important;
 }
 
-/* Product links */
-.product-card-link-fixed {
-  text-decoration: none !important;
-  color: inherit !important;
-  display: block !important;
-  width: 100% !important;
-  height: 100% !important;
+/* Make sure all child elements don't block clicks */
+.product-info-fixed, 
+.product-title-fixed, 
+.product-description-fixed,
+.product-price-fixed,
+.product-price-container-fixed,
+.product-price-original-fixed,
+.product-price-discount-fixed,
+.product-price-normal-fixed {
+  pointer-events: none !important;
+}
+
+/* Only allow pointer events on the add to cart button */
+.add-to-cart-btn-fixed {
+  pointer-events: auto !important;
+  position: relative !important;
+  z-index: 2 !important;
 }
 
 /* Product images */
@@ -114,6 +171,7 @@
   padding-bottom: 65% !important; /* Ratio réduit pour des images moins hautes */
   position: relative !important;
   overflow: hidden !important;
+  cursor: pointer !important;
 }
 
 .product-image-fixed img {
@@ -125,7 +183,7 @@
   object-fit: cover !important;
 }
 
-/* Product info */
+/* Product info - Base */
 .product-info-fixed {
   padding: 10px !important;
   flex-grow: 1 !important;
@@ -133,7 +191,21 @@
   flex-direction: column !important;
   background-color: var(--color-green, #0f4d1e) !important;
   color: white !important;
-  min-height: 110px !important; /* Hauteur minimale réduite */
+}
+
+/* Product info - Mobile */
+.mobile-grid .product-info-fixed {
+  min-height: 110px !important;
+}
+
+/* Product info - Tablet */
+.tablet-grid .product-info-fixed {
+  min-height: 125px !important;
+}
+
+/* Product info - Desktop */
+.desktop-grid .product-info-fixed {
+  min-height: 140px !important;
 }
 
 /* Product title */
@@ -145,18 +217,45 @@
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   color: white !important;
+  transition: color 0.2s ease-in-out !important;
 }
 
-/* Product description */
+/* Product description - Base */
 .product-description-fixed {
   font-size: 0.8rem !important;
-  margin: 0 0 8px 0 !important; /* Marge inférieure réduite */
-  max-height: 3.2em !important; /* Hauteur maximale réduite pour 2-3 lignes */
+  margin: 0 0 8px 0 !important;
   overflow: hidden !important;
   color: rgba(255, 255, 255, 0.8) !important;
   line-height: 1.3 !important;
   display: -webkit-box !important;
-  -webkit-line-clamp: 2 !important; /* Limiter à 2 lignes */
+  -webkit-box-orient: vertical !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Product description - Tablet */
+.tablet-grid .product-description-fixed {
+  font-size: 0.8rem !important;
+  margin: 0 0 8px 0 !important;
+  max-height: 4.5em !important;
+  overflow: hidden !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  line-height: 1.3 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 3 !important; /* 3 lignes pour tablette */
+  -webkit-box-orient: vertical !important;
+  text-overflow: ellipsis !important;
+}
+
+/* Product description - Desktop */
+.desktop-grid .product-description-fixed {
+  font-size: 0.8rem !important;
+  margin: 0 0 8px 0 !important;
+  max-height: 5.8em !important;
+  overflow: hidden !important;
+  color: rgba(255, 255, 255, 0.8) !important;
+  line-height: 1.3 !important;
+  display: -webkit-box !important;
+  -webkit-line-clamp: 4 !important; /* 4 lignes pour desktop */
   -webkit-box-orient: vertical !important;
   text-overflow: ellipsis !important;
 }
@@ -212,10 +311,99 @@
   gap: 5px !important;
   min-width: 85px !important;
   font-weight: bold !important;
+  transition: all 0.3s ease !important;
+  overflow: hidden !important;
+  position: relative !important;
 }
 
 .add-to-cart-btn-fixed:hover {
   background-color: #c9a32b !important;
+  transform: scale(1.05) !important;
+}
+
+/* Icon animation */
+.add-to-cart-btn-fixed svg {
+  transition: all 0.3s ease !important;
+  position: relative !important;
+}
+
+.add-to-cart-btn-fixed:hover svg {
+  animation: cartBounce 0.5s ease !important;
+  transform: scale(1.2) !important;
+  color: #ffffff !important; /* Changement de couleur au survol */
+}
+
+/* Effet de pulsation autour de l'icône */
+.add-to-cart-btn-fixed:hover svg::after {
+  content: '' !important;
+  position: absolute !important;
+  top: 50% !important;
+  left: 50% !important;
+  width: 20px !important;
+  height: 20px !important;
+  background: rgba(255, 255, 255, 0.2) !important;
+  border-radius: 50% !important;
+  transform: translate(-50%, -50%) !important;
+  animation: pulse 1s infinite !important;
+  z-index: -1 !important;
+}
+
+@keyframes pulse {
+  0% { 
+    transform: translate(-50%, -50%) scale(0.8); 
+    opacity: 0.8;
+  }
+  70% { 
+    transform: translate(-50%, -50%) scale(1.5); 
+    opacity: 0;
+  }
+  100% { 
+    transform: translate(-50%, -50%) scale(1.8); 
+    opacity: 0;
+  }
+}
+
+@keyframes cartBounce {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.4) rotate(5deg); }
+  100% { transform: scale(1.2); }
+}
+
+/* Effet de brillance sur le bouton */
+.add-to-cart-btn-fixed::before {
+  content: '' !important;
+  position: absolute !important;
+  top: -50% !important;
+  left: -50% !important;
+  width: 200% !important;
+  height: 200% !important;
+  background: linear-gradient(
+    to right,
+    rgba(255, 255, 255, 0) 0%,
+    rgba(255, 255, 255, 0.3) 50%,
+    rgba(255, 255, 255, 0) 100%
+  ) !important;
+  transform: rotate(45deg) !important;
+  opacity: 0 !important;
+  transition: opacity 0.3s ease !important;
+}
+
+.add-to-cart-btn-fixed:hover::before {
+  animation: shine 1s !important;
+}
+
+@keyframes shine {
+  0% {
+    opacity: 0;
+    left: -50%;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    opacity: 0;
+    left: 150%;
+  }
 }
 
 /* Product tag */
@@ -261,4 +449,37 @@
     margin-top: 5px !important;
     padding: 5px !important;
   }
+}
+
+/* Effet de texte */
+.add-to-cart-btn-fixed span {
+  transition: all 0.3s ease !important;
+}
+
+.add-to-cart-btn-fixed:hover span {
+  font-weight: bold !important;
+  letter-spacing: 0.5px !important;
+  text-shadow: 0 0 1px rgba(255, 255, 255, 0.7) !important;
+}
+
+/* Product info - Desktop */
+.desktop-grid .product-info-fixed {
+  padding: 10px !important;
+  flex-grow: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background-color: var(--color-green, #0f4d1e) !important;
+  color: white !important;
+  min-height: 140px !important; /* Hauteur minimale augmentée */
+}
+
+/* Product info - Tablet */
+.tablet-grid .product-info-fixed {
+  padding: 10px !important;
+  flex-grow: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  background-color: var(--color-green, #0f4d1e) !important;
+  color: white !important;
+  min-height: 125px !important; /* Hauteur minimale augmentée */
 } 
