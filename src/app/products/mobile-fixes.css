@@ -32,25 +32,29 @@
 .desktop-grid .product-grid-item-fixed {
   width: calc(25% - 15px) !important; /* 4 produits par ligne */
   margin: 0 0 20px 0 !important;
-  height: 380px !important; /* Hauteur fixe pour desktop */
+  height: auto !important; /* Hauteur automatique */
+  min-height: 380px !important; /* Hauteur minimale */
 }
 
 .tablet-grid .product-grid-item-fixed {
   width: calc(33.333% - 10px) !important; /* 3 produits par ligne */
   margin: 0 0 15px 0 !important;
-  height: 350px !important; /* Hauteur fixe pour tablette */
+  height: auto !important; /* Hauteur automatique */
+  min-height: 350px !important; /* Hauteur minimale */
 }
 
 .mobile-grid .product-grid-item-fixed {
   width: calc(50% - 5px) !important; /* 2 produits par ligne */
   margin: 0 0 10px 0 !important;
-  height: 320px !important; /* Hauteur fixe pour mobile */
+  height: auto !important; /* Hauteur automatique */
+  min-height: 320px !important; /* Hauteur minimale */
 }
 
 /* Très petit mobile - ajustements spécifiques */
 @media (max-width: 359px) {
   .product-grid-item-fixed {
-    height: 280px !important; /* Hauteur fixe pour très petit mobile */
+    height: auto !important; /* Hauteur automatique */
+    min-height: 280px !important; /* Hauteur minimale */
   }
   
   .product-image-fixed {
@@ -58,7 +62,8 @@
   }
   
   .product-info-fixed {
-    height: 120px !important; /* Hauteur fixe pour très petit mobile */
+    height: auto !important; /* Hauteur automatique */
+    min-height: 120px !important; /* Hauteur minimale */
     padding: 8px !important;
   }
   
@@ -79,9 +84,14 @@
     padding-top: 4px !important; /* Padding réduit */
   }
   
+  .product-price-normal-fixed,
+  .product-price-container-fixed {
+    margin-bottom: 4px !important;
+  }
+  
   .add-to-cart-btn-fixed {
     width: 100% !important;
-    margin-top: 4px !important; /* Marge supérieure réduite */
+    margin-top: 0 !important;
     padding: 5px !important;
   }
 }
@@ -174,7 +184,7 @@
 
 /* Product images - Mobile */
 .mobile-grid .product-image-fixed {
-  height: 180px !important; /* Hauteur fixe pour mobile */
+  height: 160px !important; /* Hauteur réduite pour mobile */
 }
 
 /* Product images - Tablet */
@@ -199,7 +209,6 @@
 /* Product info - Base */
 .product-info-fixed {
   padding: 10px !important;
-  flex-grow: 1 !important;
   display: flex !important;
   flex-direction: column !important;
   background-color: var(--color-green, #0f4d1e) !important;
@@ -209,19 +218,23 @@
 /* Product info - Mobile */
 .mobile-grid .product-info-fixed {
   min-height: initial !important;
-  height: 140px !important; /* Hauteur fixe pour mobile */
+  height: auto !important; /* Hauteur automatique au lieu de fixe */
+  min-height: 140px !important; /* Hauteur minimale */
+  padding: 10px !important;
 }
 
 /* Product info - Tablet */
 .tablet-grid .product-info-fixed {
   min-height: initial !important;
-  height: 150px !important; /* Hauteur fixe pour tablette */
+  height: auto !important; /* Hauteur automatique au lieu de fixe */
+  min-height: 150px !important; /* Hauteur minimale */
 }
 
 /* Product info - Desktop */
 .desktop-grid .product-info-fixed {
   min-height: initial !important;
-  height: 160px !important; /* Hauteur fixe pour desktop */
+  height: auto !important; /* Hauteur automatique au lieu de fixe */
+  min-height: 160px !important; /* Hauteur minimale */
 }
 
 /* Product title */
@@ -234,6 +247,7 @@
   text-overflow: ellipsis !important;
   color: white !important;
   transition: color 0.2s ease-in-out !important;
+  max-width: 100% !important;
 }
 
 /* Product description - Base */
@@ -246,6 +260,8 @@
   display: -webkit-box !important;
   -webkit-box-orient: vertical !important;
   text-overflow: ellipsis !important;
+  word-break: break-word !important;
+  max-width: 100% !important;
 }
 
 /* Product description - Tablet */
@@ -467,4 +483,22 @@
   background-color: var(--color-green, #0f4d1e) !important;
   color: white !important;
   min-height: 125px !important; /* Hauteur minimale augmentée */
+}
+
+/* Product price area - Mobile */
+.mobile-grid .product-price-fixed {
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: flex-start !important;
+  margin-top: auto !important;
+  padding-top: 8px !important;
+}
+
+.mobile-grid .product-price-normal-fixed,
+.mobile-grid .product-price-container-fixed {
+  margin-bottom: 8px !important;
+}
+
+.mobile-grid .add-to-cart-btn-fixed {
+  width: 100% !important;
 } 
