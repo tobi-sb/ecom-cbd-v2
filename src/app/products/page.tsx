@@ -63,20 +63,25 @@ export default function ProductsPage() {
   
   // Detect if screen is mobile
   const [isMobile, setIsMobile] = useState(false);
+  const [isTablet, setIsTablet] = useState(false);
+  const [isDesktop, setIsDesktop] = useState(false);
   
   useEffect(() => {
-    const checkIfMobile = () => {
-      setIsMobile(window.innerWidth <= 768);
+    const checkScreenSize = () => {
+      const width = window.innerWidth;
+      setIsMobile(width <= 767);
+      setIsTablet(width > 767 && width <= 1023);
+      setIsDesktop(width > 1023);
     };
     
     // Initial check
-    checkIfMobile();
+    checkScreenSize();
     
     // Add event listener
-    window.addEventListener('resize', checkIfMobile);
+    window.addEventListener('resize', checkScreenSize);
     
     // Cleanup
-    return () => window.removeEventListener('resize', checkIfMobile);
+    return () => window.removeEventListener('resize', checkScreenSize);
   }, []);
   
   // Disable body scrolling when filter modal is open
@@ -636,7 +641,7 @@ export default function ProductsPage() {
             </aside>
             
             {/* Products Grid */}
-            <div className="products-grid-fixed">
+            <div className={`products-grid-fixed ${isTablet ? 'tablet-grid' : isDesktop ? 'desktop-grid' : 'mobile-grid'}`}>
               {filteredProducts.length > 0 ? (
                 filteredProducts.map(product => (
                   <div 

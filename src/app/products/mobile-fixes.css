@@ -28,12 +28,62 @@
   background-color: var(--color-dark, #f0e6d2) !important;
 }
 
-/* Grid items - exactly 50% width minus gap */
-.product-grid-item-fixed {
-  width: calc(50% - 5px) !important;
+/* Classes spécifiques pour chaque taille d'écran */
+.desktop-grid .product-grid-item-fixed {
+  width: calc(25% - 15px) !important; /* 4 produits par ligne */
+  margin: 0 0 20px 0 !important;
+  aspect-ratio: 0.7 !important; /* Ratio plus large que haut */
+  min-height: 280px !important; /* Hauteur réduite */
+}
+
+.tablet-grid .product-grid-item-fixed {
+  width: calc(33.333% - 10px) !important; /* 3 produits par ligne */
+  margin: 0 0 15px 0 !important;
+  aspect-ratio: 0.75 !important; /* Ratio plus large que haut */
+  min-height: 260px !important; /* Hauteur réduite */
+}
+
+.mobile-grid .product-grid-item-fixed {
+  width: calc(50% - 5px) !important; /* 2 produits par ligne */
   margin: 0 0 10px 0 !important;
-  aspect-ratio: 0.55 !important; /* Encore plus grand pour accommoder 3 lignes complètes */
-  min-height: 300px !important; /* Hauteur minimale augmentée */
+  aspect-ratio: 0.8 !important; /* Ratio plus large que haut */
+  min-height: 240px !important; /* Hauteur réduite */
+}
+
+/* Très petit mobile - ajustements spécifiques */
+@media (max-width: 359px) {
+  .product-grid-item-fixed {
+    aspect-ratio: 0.85 !important; /* Ratio encore plus large que haut */
+    min-height: 220px !important; /* Hauteur encore plus réduite */
+  }
+  
+  .product-info-fixed {
+    padding: 8px !important;
+    min-height: 100px !important; /* Hauteur minimale réduite */
+  }
+  
+  .product-title-fixed {
+    font-size: 0.9rem !important;
+    margin-bottom: 4px !important; /* Marge inférieure réduite */
+  }
+  
+  .product-description-fixed {
+    font-size: 0.75rem !important;
+    line-height: 1.25 !important;
+    max-height: 2.5em !important; /* Hauteur maximale réduite */
+  }
+  
+  .product-price-fixed {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding-top: 4px !important; /* Padding réduit */
+  }
+  
+  .add-to-cart-btn-fixed {
+    width: 100% !important;
+    margin-top: 4px !important; /* Marge supérieure réduite */
+    padding: 5px !important;
+  }
 }
 
 /* Product cards */
@@ -61,7 +111,7 @@
 .product-image-fixed {
   width: 100% !important;
   height: 0 !important;
-  padding-bottom: 70% !important;
+  padding-bottom: 65% !important; /* Ratio réduit pour des images moins hautes */
   position: relative !important;
   overflow: hidden !important;
 }
@@ -83,7 +133,7 @@
   flex-direction: column !important;
   background-color: var(--color-green, #0f4d1e) !important;
   color: white !important;
-  min-height: 130px !important; /* Hauteur minimale pour la section info */
+  min-height: 110px !important; /* Hauteur minimale réduite */
 }
 
 /* Product title */
@@ -100,13 +150,13 @@
 /* Product description */
 .product-description-fixed {
   font-size: 0.8rem !important;
-  margin: 0 0 10px 0 !important;
-  max-height: 3.9em !important; /* Hauteur exacte pour 3 lignes complètes */
+  margin: 0 0 8px 0 !important; /* Marge inférieure réduite */
+  max-height: 3.2em !important; /* Hauteur maximale réduite pour 2-3 lignes */
   overflow: hidden !important;
   color: rgba(255, 255, 255, 0.8) !important;
   line-height: 1.3 !important;
   display: -webkit-box !important;
-  -webkit-line-clamp: 3 !important; /* Limite à exactement 3 lignes */
+  -webkit-line-clamp: 2 !important; /* Limiter à 2 lignes */
   -webkit-box-orient: vertical !important;
   text-overflow: ellipsis !important;
 }
@@ -182,16 +232,11 @@
   z-index: 2 !important;
 }
 
-/* Very small screens adjustments */
+/* Ajustements spécifiques pour très petits écrans */
 @media (max-width: 359px) {
-  .product-grid-item-fixed {
-    aspect-ratio: 0.6 !important;
-    min-height: 250px !important;
-  }
-  
   .product-info-fixed {
     padding: 8px !important;
-    min-height: 120px !important; /* Hauteur minimale pour petits écrans */
+    min-height: 120px !important;
   }
   
   .product-title-fixed {
@@ -202,7 +247,7 @@
   .product-description-fixed {
     font-size: 0.75rem !important;
     line-height: 1.25 !important;
-    max-height: 3.75em !important; /* 3 lignes exactement */
+    max-height: 3.75em !important;
   }
   
   .product-price-fixed {

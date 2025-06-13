@@ -73,19 +73,18 @@ const FeaturedProducts = () => {
   useEffect(() => {
     const handleResize = () => {
       const width = window.innerWidth;
-      const mobile = width <= 576;
-      const tablet = width > 576 && width <= 992;
+      const mobile = width <= 767;
+      const tablet = width > 767 && width <= 1023;
       
       setIsMobile(mobile);
       setIsTablet(tablet);
       
       if (mobile) {
-        setProductsPerView(1);
+        setProductsPerView(2); // 2 produits par ligne sur mobile
       } else if (tablet) {
-        // Specifically for iPad mini and similar tablet sizes
-        setProductsPerView(2);
+        setProductsPerView(3); // 3 produits par ligne sur tablette
       } else {
-        setProductsPerView(3);
+        setProductsPerView(4); // 4 produits par ligne sur desktop
       }
     };
 
