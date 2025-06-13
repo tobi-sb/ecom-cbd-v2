@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react';
 import styles from '../styles.module.css';
+import './mobile-fixes.css'; // Import des corrections CSS pour mobile
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
   faFilter,
@@ -612,10 +613,13 @@ export default function ProductsPage() {
             </aside>
             
             {/* Products Grid */}
-            <div className={styles.productsGrid}>
+            <div className="products-grid-fixed">
               {sortedProducts.length > 0 ? (
                 sortedProducts.map(product => (
-                  <div key={product.id} className={styles.productGridItem}>
+                  <div 
+                    key={product.id} 
+                    className="product-grid-item-fixed"
+                  >
                     <ProductCard
                       id={product.id}
                       name={product.name}

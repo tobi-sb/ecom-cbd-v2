@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
-import styles from '../styles.module.css';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { faCartPlus } from '@fortawesome/free-solid-svg-icons';
 import { useCart } from '@/contexts/CartContext';
@@ -15,11 +14,6 @@ interface ProductCardProps {
   price: number;
   discounted_price?: number | null;
   base_price?: number;
-  price_3g?: number;
-  price_5g?: number;
-  price_10g?: number;
-  price_30g?: number;
-  price_50g?: number;
   image: string;
   tag?: string;
   onAddToCart?: () => void;
@@ -38,11 +32,6 @@ const ProductCard = ({
   price, 
   discounted_price,
   base_price,
-  price_3g,
-  price_5g,
-  price_10g,
-  price_30g,
-  price_50g,
   image, 
   tag,
   onAddToCart,
@@ -50,10 +39,6 @@ const ProductCard = ({
 }: ProductCardProps) => {
   const { addToCart } = useCart();
   const [adding, setAdding] = useState(false);
-
-  // Déterminer si c'est un produit avec un prix de base ou des prix au gramme
-  const hasWeightPricing = price_3g && price_3g > 0 || price_5g && price_5g > 0 || 
-                         price_10g && price_10g > 0 || price_30g && price_30g > 0 || price_50g && price_50g > 0;
   
   // Déterminer le prix à afficher
   const displayPrice = base_price && base_price > 0 ? base_price : price;
@@ -94,9 +79,9 @@ const ProductCard = ({
 
   return (
     <>
-      <Link href={`/products/${id}`} className={styles.productCardLink}>
-        <div className={styles.productCard} style={customStyles.productCard}>
-          <div className={styles.productImage}>
+      <Link href={`/products/${id}`} className="product-card-link-fixed">
+        <div className="product-card-fixed" style={customStyles.productCard}>
+          <div className="product-image-fixed">
             <Image 
               src={image} 
               alt={name}
@@ -104,28 +89,28 @@ const ProductCard = ({
               height={150}
               style={{ objectFit: 'cover', width: '100%', height: '100%' }}
             />
-            {tag && <div className={styles.productTag}>{tag}</div>}
+            {tag && <div className="product-tag-fixed">{tag}</div>}
           </div>
-          <div className={styles.productInfo}>
-            <h3>{name}</h3>
-            <p className={styles.productDescription}>{truncatedDescription}</p>
-            <div className={styles.productPrice} style={customStyles.productPrice}>
+          <div className="product-info-fixed">
+            <h3 className="product-title-fixed">{name}</h3>
+            <p className="product-description-fixed">{truncatedDescription}</p>
+            <div className="product-price-fixed" style={customStyles.productPrice}>
               {hasDiscount ? (
-                <div className={styles.priceContainer}>
-                  <span className={styles.priceOriginal}>
-                    {hasWeightPricing ? `À partir de ${displayPrice.toFixed(2)}€` : `${displayPrice.toFixed(2)}€`}
+                <div className="product-price-container-fixed">
+                  <span className="product-price-original-fixed">
+                    {displayPrice.toFixed(2)}€
                   </span>
-                  <span className={styles.productListPriceDiscount}>
-                    {hasWeightPricing ? `À partir de ${discounted_price?.toFixed(2)}€` : `${discounted_price?.toFixed(2)}€`}
+                  <span className="product-price-discount-fixed">
+                    {discounted_price?.toFixed(2)}€
                   </span>
                 </div>
               ) : (
-                <span className={styles.productListPriceNormal} style={customStyles.price}>
-                  {hasWeightPricing ? `À partir de ${displayPrice.toFixed(2)}€` : `${displayPrice.toFixed(2)}€`}
+                <span className="product-price-normal-fixed" style={customStyles.price}>
+                  {displayPrice.toFixed(2)}€
                 </span>
               )}
               <button 
-                className={`${styles.addToCartBtn} ${adding ? styles.adding : ''}`} 
+                className="add-to-cart-btn-fixed" 
                 onClick={handleAddToCart}
                 aria-label="Ajouter au panier"
                 disabled={adding}
