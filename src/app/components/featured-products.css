@@ -285,6 +285,13 @@
 
 /* Responsive adjustments */
 @media (max-width: 767px) {
+  .slider-wrapper {
+    scroll-snap-type: x proximity !important; /* Moins strict que mandatory pour mobile */
+    -webkit-overflow-scrolling: touch !important;
+    scroll-behavior: auto !important; /* Désactiver le comportement de défilement fluide sur mobile */
+    transition: none !important; /* Désactiver les transitions sur mobile */
+  }
+  
   .featured-product-card {
     max-width: 220px !important;
     min-width: 220px !important; /* Largeur minimale fixe pour mobile */

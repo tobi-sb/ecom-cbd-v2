@@ -25,6 +25,7 @@ const FeaturedProducts = () => {
   const [isDragging, setIsDragging] = useState(false);
   const [lastX, setLastX] = useState(0); // Pour un défilement plus fluide
   const [dragDistance, setDragDistance] = useState(0); // Pour suivre la distance de défilement
+  const [touchStartX, setTouchStartX] = useState(0); // Position initiale du toucher
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { addToCart } = useCart();
 
@@ -147,7 +148,40 @@ const FeaturedProducts = () => {
     if (!containerRef.current) return;
     setIsDragging(true);
     setLastX(e.touches[0].pageX);
+    setTouchStartX(e.touches[0].pageX); // Enregistrer la position initiale du toucher
     setDragDistance(0);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDragging || !containerRef.current) return;
+    
+    // Calculer la distance parcourue depuis le dernier mouvement
+    const x = e.touches[0].pageX;
+    const dx = x - lastX;
+    setLastX(x);
+    
+    // Calculer la distance totale parcourue depuis le début du toucher
+    const totalDx = x - touchStartX;
+    
+    // Mettre à jour la distance totale de glissement
+    setDragDistance(prev => prev + Math.abs(dx));
+    
+    // Appliquer le défilement en fonction du mouvement avec une vitesse réduite
+    // Sur mobile, utiliser une vitesse encore plus réduite (0.3 au lieu de 0.5)
+    containerRef.current.scrollLeft -= dx * 0.3;
+    
+    // Si le déplacement est significatif, empêcher le défilement de la page
+    if (Math.abs(totalDx) > 10) {
+      e.preventDefault();
+    }
+  };
+
+  const handleTouchEnd = () => {
+    // Attendre un court instant avant de réinitialiser isDragging
+    // Cela permet d'éviter les clics accidentels juste après le défilement
+    setTimeout(() => {
+      setIsDragging(false);
+    }, 50);
   };
 
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
@@ -168,24 +202,6 @@ const FeaturedProducts = () => {
     e.preventDefault();
   };
 
-  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!isDragging || !containerRef.current) return;
-    
-    // Calculer la distance parcourue depuis le dernier mouvement
-    const x = e.touches[0].pageX;
-    const dx = x - lastX;
-    setLastX(x);
-    
-    // Appliquer le défilement en fonction du mouvement avec une vitesse réduite (divisé par 2)
-    containerRef.current.scrollLeft -= dx * 0.5;
-    
-    // Mettre à jour la distance totale de glissement
-    setDragDistance(prev => prev + Math.abs(dx));
-    
-    // Empêcher le défilement de la page
-    e.preventDefault();
-  };
-
   const handleMouseUp = () => {
     setIsDragging(false);
     if (containerRef.current) {
@@ -198,10 +214,6 @@ const FeaturedProducts = () => {
     if (containerRef.current) {
       containerRef.current.style.cursor = 'grab';
     }
-  };
-
-  const handleTouchEnd = () => {
-    setIsDragging(false);
   };
   
   if (loading) {
@@ -247,7 +259,7 @@ const FeaturedProducts = () => {
               style={{
                 display: 'flex',
                 overflow: 'auto',
-                scrollBehavior: 'smooth',
+                scrollBehavior: isMobile ? 'auto' : 'smooth',
                 WebkitOverflowScrolling: 'touch',
                 msOverflowStyle: 'none', /* IE and Edge */
                 scrollbarWidth: 'none', /* Firefox */
@@ -256,12 +268,12 @@ const FeaturedProducts = () => {
                 WebkitUserSelect: 'none',
                 MozUserSelect: 'none',
                 msUserSelect: 'none',
-                scrollSnapType: 'x mandatory',
+                scrollSnapType: isMobile ? 'x proximity' : 'x mandatory',
                 touchAction: 'pan-x',
                 width: '100%',
                 height: '100%',
                 paddingBottom: '30px',
-                transition: 'all 0.3s ease'
+                transition: isMobile ? 'none' : 'all 0.3s ease'
               }}
               onMouseDown={handleMouseDown}
               onMouseMove={handleMouseMove}
