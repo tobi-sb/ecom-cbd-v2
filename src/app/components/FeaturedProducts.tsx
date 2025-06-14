@@ -27,7 +27,10 @@ const FeaturedProducts = () => {
   const [dragDistance, setDragDistance] = useState(0); // Pour suivre la distance de défilement
   const [touchStartX, setTouchStartX] = useState(0); // Position initiale du toucher
   const [touchStartScrollLeft, setTouchStartScrollLeft] = useState(0); // Position de défilement initiale
+  const [velocity, setVelocity] = useState(0); // Vitesse de défilement pour l'inertie
+  const [lastMoveTime, setLastMoveTime] = useState(0); // Temps du dernier mouvement
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const inertiaRef = useRef<number | null>(null); // Pour stocker l'ID de l'animation d'inertie
   const { addToCart } = useCart();
 
   // Fetch products from Supabase
@@ -133,34 +136,70 @@ const FeaturedProducts = () => {
     window.location.href = `/products/${productId}`;
   };
 
-  // Mouse/Touch event handlers for dragging
-  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!containerRef.current) return;
-    setIsDragging(true);
-    setLastX(e.pageX);
-    setDragDistance(0);
-    // Changer le curseur pour indiquer que l'élément est en cours de glissement
-    if (containerRef.current) {
-      containerRef.current.style.cursor = 'grabbing';
+  // Fonction pour appliquer l'effet d'inertie
+  const applyInertia = (initialVelocity: number) => {
+    // Annuler toute animation d'inertie en cours
+    if (inertiaRef.current !== null) {
+      cancelAnimationFrame(inertiaRef.current);
     }
+    
+    // Facteur de décélération (plus petit = décélération plus lente)
+    const deceleration = 0.95;
+    let currentVelocity = initialVelocity;
+    
+    const animateInertia = () => {
+      if (!containerRef.current || Math.abs(currentVelocity) < 0.5) {
+        // Arrêter l'animation quand la vitesse devient négligeable
+        return;
+      }
+      
+      // Appliquer la vitesse actuelle au défilement
+      containerRef.current.scrollLeft -= currentVelocity;
+      
+      // Réduire progressivement la vitesse
+      currentVelocity *= deceleration;
+      
+      // Continuer l'animation
+      inertiaRef.current = requestAnimationFrame(animateInertia);
+    };
+    
+    // Démarrer l'animation
+    inertiaRef.current = requestAnimationFrame(animateInertia);
   };
-
+  
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    // Annuler toute animation d'inertie en cours
+    if (inertiaRef.current !== null) {
+      cancelAnimationFrame(inertiaRef.current);
+      inertiaRef.current = null;
+    }
+    
     if (!containerRef.current) return;
     setIsDragging(true);
     setLastX(e.touches[0].pageX);
     setTouchStartX(e.touches[0].pageX); // Enregistrer la position initiale du toucher
     setTouchStartScrollLeft(containerRef.current.scrollLeft); // Enregistrer la position de défilement initiale
     setDragDistance(0);
+    setVelocity(0);
+    setLastMoveTime(Date.now());
   };
 
   const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
     if (!isDragging || !containerRef.current) return;
     
+    const currentTime = Date.now();
+    const timeElapsed = currentTime - lastMoveTime;
+    
     // Calculer la distance parcourue depuis le dernier mouvement
     const x = e.touches[0].pageX;
     const dx = x - lastX;
     setLastX(x);
+    
+    // Calculer la vitesse (distance / temps)
+    // Limiter la vitesse maximale pour éviter les mouvements trop brusques
+    const newVelocity = Math.max(Math.min(dx / (timeElapsed || 1) * 16, 30), -30);
+    setVelocity(newVelocity);
+    setLastMoveTime(currentTime);
     
     // Calculer la distance totale parcourue depuis le début du toucher
     const totalDx = x - touchStartX;
@@ -185,27 +224,30 @@ const FeaturedProducts = () => {
   };
 
   const handleTouchEnd = () => {
-    // Sur mobile, désactiver complètement le comportement de snap
+    // Sur mobile, appliquer l'effet d'inertie
     if (isMobile && containerRef.current) {
-      // Figer la position de défilement actuelle pour éviter le retour en arrière
-      const currentScrollLeft = containerRef.current.scrollLeft;
-      
-      // Attendre un court instant avant de réinitialiser isDragging
-      setTimeout(() => {
-        if (containerRef.current) {
-          // S'assurer que la position de défilement reste la même
-          containerRef.current.scrollLeft = currentScrollLeft;
-        }
-        setIsDragging(false);
-      }, 50);
-    } else {
-      // Sur desktop, comportement normal
-      setTimeout(() => {
-        setIsDragging(false);
-      }, 50);
+      // Appliquer l'inertie avec la vitesse actuelle
+      applyInertia(velocity);
     }
+    
+    // Réinitialiser l'état de glissement
+    setTimeout(() => {
+      setIsDragging(false);
+    }, 50);
   };
 
+  // Mouse/Touch event handlers for dragging
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    setIsDragging(true);
+    setLastX(e.pageX);
+    setDragDistance(0);
+    // Changer le curseur pour indiquer que l'élément est en cours de glissement
+    if (containerRef.current) {
+      containerRef.current.style.cursor = 'grabbing';
+    }
+  };
+  
   const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
     if (!isDragging || !containerRef.current) return;
     

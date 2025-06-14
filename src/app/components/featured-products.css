@@ -292,6 +292,11 @@
     transition: none !important; /* Désactiver les transitions sur mobile */
     scroll-snap-align: none !important;
     scroll-snap-stop: normal !important;
+    overflow-x: auto !important;
+    /* Styles pour améliorer l'inertie */
+    -webkit-overflow-scrolling: touch !important; /* Réactiver pour l'inertie native */
+    overscroll-behavior-x: contain !important; /* Empêcher le défilement de la page */
+    touch-action: pan-x !important; /* Autoriser uniquement le défilement horizontal */
   }
   
   /* Désactiver le snap sur les éléments individuels aussi */
