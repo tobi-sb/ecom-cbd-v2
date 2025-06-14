@@ -286,10 +286,17 @@
 /* Responsive adjustments */
 @media (max-width: 767px) {
   .slider-wrapper {
-    scroll-snap-type: x proximity !important; /* Moins strict que mandatory pour mobile */
-    -webkit-overflow-scrolling: touch !important;
+    scroll-snap-type: none !important; /* Désactiver complètement le snap sur mobile */
+    -webkit-overflow-scrolling: auto !important; /* Utiliser le défilement standard */
     scroll-behavior: auto !important; /* Désactiver le comportement de défilement fluide sur mobile */
     transition: none !important; /* Désactiver les transitions sur mobile */
+    scroll-snap-align: none !important;
+    scroll-snap-stop: normal !important;
+  }
+  
+  /* Désactiver le snap sur les éléments individuels aussi */
+  .featured-product-container {
+    scroll-snap-align: none !important;
   }
   
   .featured-product-card {
