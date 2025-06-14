@@ -16,6 +16,82 @@
 .featured-product-price-normal {
   all: initial !important;
   box-sizing: border-box !important;
+  user-select: none !important;
+  -webkit-user-select: none !important;
+  -moz-user-select: none !important;
+  -ms-user-select: none !important;
+}
+
+/* Conteneur principal du slider */
+.slider-container {
+  position: relative !important;
+  overflow: hidden !important;
+}
+
+/* Wrapper du slider - celui qui gère le défilement */
+.slider-wrapper {
+  display: flex !important;
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+  scroll-snap-type: x mandatory !important;
+  -webkit-overflow-scrolling: touch !important;
+  scrollbar-width: none !important; /* Firefox */
+  -ms-overflow-style: none !important; /* IE and Edge */
+  cursor: grab !important;
+  scroll-behavior: smooth !important;
+  transition: scroll-behavior 0.5s ease !important;
+}
+
+/* Cacher la scrollbar */
+.slider-wrapper::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Style quand on est en train de glisser */
+.slider-wrapper.is-dragging {
+  cursor: grabbing !important;
+  scroll-behavior: auto !important;
+}
+
+/* Désactiver les liens pendant le glissement */
+.slider-wrapper.is-dragging .featured-product-link {
+  pointer-events: none !important;
+}
+
+/* Styles pour améliorer le défilement fluide */
+@media (pointer: fine) {
+  /* Styles pour les appareils avec pointeur précis (souris) */
+  .slider-wrapper {
+    cursor: grab !important;
+  }
+  
+  .slider-wrapper:active {
+    cursor: grabbing !important;
+  }
+}
+
+/* Empêcher le glisser-déposer des images */
+.featured-product-image img {
+  pointer-events: none !important;
+  -webkit-user-drag: none !important;
+  user-drag: none !important;
+  -webkit-touch-callout: none !important;
+}
+
+/* Masquer la barre de défilement mais permettre le défilement */
+/* Pour Chrome, Safari et Opera */
+::-webkit-scrollbar {
+  display: none !important;
+}
+
+/* Pour Firefox */
+* {
+  scrollbar-width: none !important;
+}
+
+/* Pour IE et Edge */
+* {
+  -ms-overflow-style: none !important;
 }
 
 /* Conteneur du produit */
@@ -64,6 +140,7 @@
   width: 100% !important;
   height: 100% !important;
   position: relative !important;
+  pointer-events: auto !important; /* Activer les événements par défaut */
 }
 
 /* Product image container */
@@ -208,8 +285,13 @@
 
 /* Responsive adjustments */
 @media (max-width: 767px) {
+  .featured-product-card {
+    max-width: 220px !important;
+    min-width: 220px !important; /* Largeur minimale fixe pour mobile */
+  }
+  
   .featured-product-image {
-    height: 180px !important;
+    height: 160px !important;
   }
   
   .featured-product-info {
@@ -230,11 +312,6 @@
     padding: 6px 12px !important;
     font-size: 0.8rem !important;
   }
-  
-  .featured-product-card {
-    max-width: 280px !important;
-    min-width: 280px !important; /* Largeur minimale fixe pour mobile */
-  }
 }
 
 /* Tablet adjustments */
@@ -247,4 +324,52 @@
     max-width: 320px !important;
     min-width: 320px !important; /* Largeur minimale fixe pour tablette */
   }
+}
+
+/* Pour les très petits écrans mobiles */
+@media (max-width: 374px) {
+  .featured-product-card {
+    max-width: 190px !important;
+    min-width: 190px !important; /* Largeur minimale fixe pour très petits écrans */
+  }
+  
+  .featured-product-image {
+    height: 140px !important;
+  }
+  
+  .featured-product-info {
+    padding: 12px !important;
+  }
+  
+  .featured-product-title {
+    font-size: 0.9rem !important;
+    margin-bottom: 6px !important;
+  }
+  
+  .featured-product-description {
+    font-size: 0.75rem !important;
+    margin-bottom: 8px !important;
+  }
+  
+  .featured-add-to-cart-btn {
+    padding: 5px 10px !important;
+    font-size: 0.75rem !important;
+  }
+}
+
+/* Product card wrapper - remplace le lien */
+.featured-product-card-wrapper {
+  text-decoration: none !important;
+  color: inherit !important;
+  display: block !important;
+  width: 100% !important;
+  height: 100% !important;
+  position: relative !important;
+  cursor: pointer !important;
+}
+
+/* Désactiver temporairement le clic pendant le glissement */
+.slider-wrapper.is-dragging .featured-product-card-wrapper {
+  pointer-events: none !important;
+  cursor: grabbing !important;
 } 

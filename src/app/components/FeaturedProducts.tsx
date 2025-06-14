@@ -6,8 +6,6 @@ import './featured-products.css'; // Import des styles spécifiques pour les pro
 import AddToCartNotification from './AddToCartNotification';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import { 
-  faChevronLeft,
-  faChevronRight,
   faSpinner,
   faCartPlus
 } from '@fortawesome/free-solid-svg-icons';
@@ -20,11 +18,13 @@ import { useCart } from '@/contexts/CartContext';
 const FeaturedProducts = () => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
-  const [startIndex, setStartIndex] = useState(0);
   const [showNotification, setShowNotification] = useState(false);
   const [productsPerView, setProductsPerView] = useState(3); // Default to 3 products per view
   const [isMobile, setIsMobile] = useState(false);
   const [isTablet, setIsTablet] = useState(false);
+  const [isDragging, setIsDragging] = useState(false);
+  const [lastX, setLastX] = useState(0); // Pour un défilement plus fluide
+  const [dragDistance, setDragDistance] = useState(0); // Pour suivre la distance de défilement
   const containerRef = useRef<HTMLDivElement | null>(null);
   const { addToCart } = useCart();
 
@@ -102,22 +102,6 @@ const FeaturedProducts = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
   
-  // Handle navigation
-  const handlePrev = () => {
-    if (startIndex > 0) {
-      setStartIndex(startIndex - 1);
-    }
-  };
-
-  const handleNext = () => {
-    // Ensure we don't go beyond the last card
-    // Add a small buffer for tablets to ensure last card is fully visible
-    const maxIndex = Math.max(0, products.length - productsPerView);
-    if (startIndex < maxIndex) {
-      setStartIndex(startIndex + 1);
-    }
-  };
-
   const handleAddToCart = (e: React.MouseEvent, product: Product) => {
     // Stop propagation to prevent navigation when clicking the cart button
     e.preventDefault();
@@ -135,7 +119,91 @@ const FeaturedProducts = () => {
     // Show notification
     setShowNotification(true);
   };
+  
+  // Fonction pour naviguer vers la page produit
+  const navigateToProduct = (productId: string) => {
+    // Vérifier si on est en train de faire défiler
+    if (isDragging || dragDistance > 5) {
+      return; // Ne pas naviguer si on est en train de faire défiler
+    }
+    
+    // Navigation programmatique
+    window.location.href = `/products/${productId}`;
+  };
 
+  // Mouse/Touch event handlers for dragging
+  const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    setIsDragging(true);
+    setLastX(e.pageX);
+    setDragDistance(0);
+    // Changer le curseur pour indiquer que l'élément est en cours de glissement
+    if (containerRef.current) {
+      containerRef.current.style.cursor = 'grabbing';
+    }
+  };
+
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!containerRef.current) return;
+    setIsDragging(true);
+    setLastX(e.touches[0].pageX);
+    setDragDistance(0);
+  };
+
+  const handleMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!isDragging || !containerRef.current) return;
+    
+    // Calculer la distance parcourue depuis le dernier mouvement
+    const x = e.pageX;
+    const dx = x - lastX;
+    setLastX(x);
+    
+    // Appliquer le défilement en fonction du mouvement avec une vitesse réduite (divisé par 2)
+    containerRef.current.scrollLeft -= dx * 0.5;
+    
+    // Mettre à jour la distance totale de glissement
+    setDragDistance(prev => prev + Math.abs(dx));
+    
+    // Empêcher la sélection de texte pendant le défilement
+    e.preventDefault();
+  };
+
+  const handleTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!isDragging || !containerRef.current) return;
+    
+    // Calculer la distance parcourue depuis le dernier mouvement
+    const x = e.touches[0].pageX;
+    const dx = x - lastX;
+    setLastX(x);
+    
+    // Appliquer le défilement en fonction du mouvement avec une vitesse réduite (divisé par 2)
+    containerRef.current.scrollLeft -= dx * 0.5;
+    
+    // Mettre à jour la distance totale de glissement
+    setDragDistance(prev => prev + Math.abs(dx));
+    
+    // Empêcher le défilement de la page
+    e.preventDefault();
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+    if (containerRef.current) {
+      containerRef.current.style.cursor = 'grab';
+    }
+  };
+
+  const handleMouseLeave = () => {
+    setIsDragging(false);
+    if (containerRef.current) {
+      containerRef.current.style.cursor = 'grab';
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+  
   if (loading) {
     return (
       <section className={styles.products} style={{ position: 'relative', zIndex: 1 }}>
@@ -161,122 +229,127 @@ const FeaturedProducts = () => {
         <>
           {/* Custom Slider */}
           <div 
-            ref={containerRef}
+            className="slider-container"
             style={{
               maxWidth: '1200px',
               margin: '0 auto',
               position: 'relative',
               padding: '0',
-              overflow: 'hidden',
+              overflow: 'hidden', // Changé de 'auto' à 'hidden'
+              paddingLeft: isMobile ? '10px' : isTablet ? '15px' : '20px',
+              paddingRight: isMobile ? '10px' : isTablet ? '15px' : '20px',
             }}
           >
-            {/* Navigation buttons */}
-            {products.length > productsPerView && (
-              <button 
-                className={styles.sliderNav}
-                onClick={handlePrev}
-                disabled={startIndex === 0}
-                style={{ 
-                  position: 'absolute', 
-                  left: isMobile ? '5px' : isTablet ? '10px' : '10px', 
-                  top: '50%', 
-                  transform: 'translateY(-50%)', 
-                  zIndex: 5 
-                }}
-              >
-                <FontAwesomeIcon icon={faChevronLeft} />
-              </button>
-            )}
-            
-            {/* Slider content */}
-            <div 
+            {/* Slider wrapper - ce div sera celui qui gère le défilement */}
+            <div
+              ref={containerRef}
+              className={isDragging ? 'slider-wrapper is-dragging' : 'slider-wrapper'}
               style={{
                 display: 'flex',
-                transition: 'transform 0.4s ease',
-                transform: `translateX(-${startIndex * (100 / productsPerView)}%)`,
-                marginLeft: '0',
-                marginRight: '0',
-                paddingBottom: '30px',
+                overflow: 'auto',
+                scrollBehavior: 'smooth',
+                WebkitOverflowScrolling: 'touch',
+                msOverflowStyle: 'none', /* IE and Edge */
+                scrollbarWidth: 'none', /* Firefox */
+                cursor: isDragging ? 'grabbing' : 'grab',
+                userSelect: 'none',
+                WebkitUserSelect: 'none',
+                MozUserSelect: 'none',
+                msUserSelect: 'none',
+                scrollSnapType: 'x mandatory',
+                touchAction: 'pan-x',
                 width: '100%',
-                justifyContent: 'flex-start'
+                height: '100%',
+                paddingBottom: '30px',
+                transition: 'all 0.3s ease'
               }}
+              onMouseDown={handleMouseDown}
+              onMouseMove={handleMouseMove}
+              onMouseUp={handleMouseUp}
+              onMouseLeave={handleMouseLeave}
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
             >
-              {products.map((product, index) => (
-                <div 
-                  key={product.id}
-                  className={`featured-product-container ${index === 0 ? 'featured-product-container-first' : ''}`}
-                  style={{
-                    flex: `0 0 ${100 / productsPerView}%`,
-                    boxSizing: 'border-box'
-                  }}
-                >
-                  <Link href={`/products/${product.id}`} className="featured-product-link">
-                    <div className="featured-product-card">
-                      <div className="featured-product-image">
-                        <Image 
-                          src={product.image_url || '/images/placeholder-product.jpg'} 
-                          alt={product.name}
-                          width={300}
-                          height={200}
-                          style={{ objectFit: 'cover' }}
-                        />
-                        {product.tag && <div className="featured-product-tag">{product.tag}</div>}
-                      </div>
-                      <div className="featured-product-info">
-                        <h3 className="featured-product-title">{product.name}</h3>
-                        <p className="featured-product-description">
-                          {product.description.length > 80 
-                            ? `${product.description.substring(0, 80)}...` 
-                            : product.description}
-                        </p>
-                        <div className="featured-product-price">
-                          {product.discounted_price ? (
-                            <div className="featured-product-price-container">
-                              <span className="featured-product-price-original">
+              {/* Slider content */}
+              <div 
+                style={{
+                  display: 'flex',
+                  marginLeft: '0',
+                  marginRight: '0',
+                  paddingBottom: '30px',
+                  width: '100%',
+                  justifyContent: 'flex-start',
+                  userSelect: 'none',
+                  WebkitUserSelect: 'none',
+                  MozUserSelect: 'none',
+                  msUserSelect: 'none'
+                }}
+              >
+                {products.map((product, index) => (
+                  <div 
+                    key={product.id}
+                    className={`featured-product-container ${index === 0 ? 'featured-product-container-first' : ''}`}
+                    style={{
+                      flex: `0 0 ${100 / productsPerView}%`,
+                      boxSizing: 'border-box',
+                      paddingRight: '20px',
+                      scrollSnapAlign: 'start'
+                    }}
+                  >
+                    <div 
+                      className="featured-product-card-wrapper"
+                      onClick={() => navigateToProduct(product.id)}
+                    >
+                      <div className="featured-product-card">
+                        <div className="featured-product-image">
+                          <Image 
+                            src={product.image_url || '/images/placeholder-product.jpg'} 
+                            alt={product.name}
+                            width={300}
+                            height={200}
+                            style={{ objectFit: 'cover' }}
+                          />
+                          {product.tag && <div className="featured-product-tag">{product.tag}</div>}
+                        </div>
+                        <div className="featured-product-info">
+                          <h3 className="featured-product-title">{product.name}</h3>
+                          <p className="featured-product-description">
+                            {product.description.length > 80 
+                              ? `${product.description.substring(0, 80)}...` 
+                              : product.description}
+                          </p>
+                          <div className="featured-product-price">
+                            {product.discounted_price ? (
+                              <div className="featured-product-price-container">
+                                <span className="featured-product-price-original">
+                                  {(product.price_3g || product.base_price || 0).toFixed(2)}€
+                                </span>
+                                <span className="featured-product-price-discount">
+                                  {product.discounted_price.toFixed(2)}€
+                                </span>
+                              </div>
+                            ) : (
+                              <span className="featured-product-price-normal">
                                 {(product.price_3g || product.base_price || 0).toFixed(2)}€
                               </span>
-                              <span className="featured-product-price-discount">
-                                {product.discounted_price.toFixed(2)}€
-                              </span>
-                            </div>
-                          ) : (
-                            <span className="featured-product-price-normal">
-                              {(product.price_3g || product.base_price || 0).toFixed(2)}€
-                            </span>
-                          )}
-                          <button 
-                            className="featured-add-to-cart-btn" 
-                            onClick={(e) => handleAddToCart(e, product)}
-                            aria-label="Ajouter au panier"
-                          >
-                            <FontAwesomeIcon icon={faCartPlus} />
-                            <span>Ajouter</span>
-                          </button>
+                            )}
+                            <button 
+                              className="featured-add-to-cart-btn" 
+                              onClick={(e) => handleAddToCart(e, product)}
+                              aria-label="Ajouter au panier"
+                            >
+                              <FontAwesomeIcon icon={faCartPlus} />
+                              <span>Ajouter</span>
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </Link>
-                </div>
-              ))}
+                  </div>
+                ))}
+              </div>
             </div>
-            
-            {/* Navigation right button */}
-            {products.length > productsPerView && (
-              <button 
-                className={styles.sliderNav}
-                onClick={handleNext}
-                disabled={startIndex >= products.length - productsPerView}
-                style={{ 
-                  position: 'absolute', 
-                  right: isMobile ? '5px' : isTablet ? '10px' : '10px', 
-                  top: '50%', 
-                  transform: 'translateY(-50%)', 
-                  zIndex: 5 
-                }}
-              >
-                <FontAwesomeIcon icon={faChevronRight} />
-              </button>
-            )}
           </div>
 
           {/* View All Products Button */}
