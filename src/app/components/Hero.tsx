@@ -177,9 +177,9 @@ const Hero = () => {
               style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '14px' }}
               onClick={togglePlay}
             >
-              {/* Utiliser l'URL AWS S3 avec les bons paramètres */}
+              {/* Utiliser la vidéo locale */}
               <source 
-                src="https://test-tobi.s3.eu-north-1.amazonaws.com/video.mp4" 
+                src="/video/video.mp4" 
                 type="video/mp4" 
               />
               Votre navigateur ne prend pas en charge la lecture vidéo.

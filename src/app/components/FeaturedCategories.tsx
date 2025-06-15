@@ -11,8 +11,7 @@ import {
   faCookie, 
   faStar,
   faToolbox,
-  faVial,
-  faSmokingBan
+  faVial
 } from '@fortawesome/free-solid-svg-icons';
 
 // Icon mapping for categories
@@ -23,7 +22,7 @@ const categoryIcons = {
   'comestibles': faCookie,
   'nouveautes': faStar,
   'accessoires': faToolbox,
-  'vapes': faSmokingBan,
+  'vapes': faCannabis,
   'extractions': faVial
 };
 
@@ -59,7 +58,7 @@ const staticCategories = [
   },
   {
     id: 'extractions-id',
-    name: 'Accessoire',
+    name: 'Accessoire & Electronique',
     slug: 'extractions',
     description: 'Accessoires pour profiter pleinement de votre expérience CBD',
     image_url: '/images/categories/accesoire.jpg'
@@ -73,10 +72,10 @@ const staticCategories = [
   },
   {
     id: 'vapes-id',
-    name: 'Electronique',
+    name: 'C.B.N',
     slug: 'vapes',
     description: 'Découvrez notre sélection de vaporisateurs pour CBD',
-    image_url: '/images/categories/ce.jpg'
+    image_url: '/images/cbn/image.png'
   }
 ];
 
